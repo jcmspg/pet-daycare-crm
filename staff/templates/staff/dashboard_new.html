@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard - {{ business.name|default:"Tails Daycare" }}</title>
+    {% load static %}
+    {% load custom_filters %}
+    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <title>Tails Pets 🐕</title>
+    <link rel="stylesheet" href="{% static 'staff/dashboard.css' %}" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- HEADER -->
+      <header>
+        <h1>🐕 {{ business.name|default:"Tails Daycare" }}</h1>
+        <div class="header-nav">
+          <a href="{% url 'staff:feed' %}" class="nav-btn">📰 Feed</a>
+          <a href="{% url 'staff:dashboard' %}" class="nav-btn">🔄 Refresh</a>
+          <a href="{% url 'staff:logout' %}" class="nav-btn" style="background: #FF6B6B; color: white;">🚪 Logout</a>
+        </div>
+      </header>
+
+      <!-- MESSAGES -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="message {% if message.tags %}{{ message.tags }}{% else %}success{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- STATS GRID -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h3>📊 Occupancy</h3>
+          <div class="value">{{ in_house_count }}/{{ pets|length }}</div>
+          <div class="subtext">{{ occupancy_pct|floatformat:0 }}% in house today</div>
+        </div>
+        <div class="stat-card">
+          <h3>⏳ Pending Bookings</h3>
+          <div class="value">{{ pending_bookings|length }}</div>
+          <div class="subtext">awaiting confirmation</div>
+        </div>
+        <div class="stat-card">
+          <h3>🐾 Total Pets</h3>
+          <div class="value">{{ pets|length }}</div>
+          <div class="subtext">in your daycare</div>
+        </div>
+      </div>
+
+      <!-- PENDING BOOKINGS -->
+      {% if pending_bookings %}
+      <h2 class="section-title">⏳ Pending Service Booking Requests</h2>
+      <div class="pending-bookings">
+        <div class="pending-bookings-header">
+          <h2>{{ pending_bookings|length }} Booking{{ pending_bookings|length|pluralize }} Waiting for Approval</h2>
+          <span class="badge">Action Required</span>
+        </div>
+        <div class="booking-list">
+          {% for booking in pending_bookings %}
+          <div class="booking-item">
+            <div>
+              <div class="booking-pet">{{ booking.pet.name }}</div>
+              <div class="booking-tutor">by {{ booking.tutor.name }}</div>
+            </div>
+            <div>
+              <span class="booking-service">{{ booking.slot.service.type }}</span>
+            </div>
+            <div>
+              <div class="booking-datetime"><strong>{{ booking.slot.date|date:"M d, Y" }}</strong></div>
+              <div class="booking-datetime">{{ booking.slot.start_time|time:"H:i" }} - {{ booking.slot.end_time|time:"H:i" }}</div>
+            </div>
+            <div>
+              <small style="color: var(--gray);">{{ booking.notes|default:"No notes" }}</small>
+            </div>
+            <div class="booking-actions">
+              <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="confirm_booking">
+                <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                <button type="submit" class="btn-action btn-confirm">Approve</button>
+              </form>
+              <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reject_booking">
+                <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                <button type="submit" class="btn-action btn-reject">Reject</button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- PETS MANAGEMENT -->
+      <h2 class="section-title">🐾 Pet Management & Attendance</h2>
+      <div class="pets-grid">
+        {% for pet in pets %}
+        <div class="pet-card">
+          <div class="pet-card-header">
+            <div class="pet-avatar" style="display:flex;align-items:center;gap:10px;">
+              {% if pet.photo %}
+                <img src="{{ pet.photo.url }}" alt="{{ pet.name }} photo" style="width:40px;height:40px;object-fit:cover;border-radius:50%;border:1px solid var(--card-border);" />
+              {% else %}
+                <img src="{% static 'staff/dog_placeholder.svg' %}" alt="No photo" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--card-border);background:var(--card-bg);" />
+              {% endif %}
+              <div class="pet-name">{{ pet.name }}</div>
+            </div>
+            <div class="pet-info">
+              {% if pet.tutors.first %}
+                👤 {{ pet.tutors.first.name }} • 📱 {{ pet.tutors.first.phone }}
+              {% else %}
+                No tutor assigned
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="pet-card-body">
+            <div class="pet-section">
+              <div class="pet-section-title">📄 Pet Sheet</div>
+              <a href="{% url 'staff:pet_sheet' pet.id %}" class="nav-btn">View Sheet</a>
+            </div>
+            <!-- STATUS -->
+            {% with checkin=pet_checkins|get_item:pet.id %}
+              {% if checkin %}
+                <div class="pet-status {% if checkin.is_present %}present{% else %}absent{% endif %}">
+                  {% if checkin.is_present %}
+                    ✅ In House
+                  {% else %}
+                    ❌ Not Present
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="pet-status absent">No check-in record</div>
+              {% endif %}
+            {% endwith %}
+
+            <!-- MINI CALENDAR (NEXT 15 DAYS) -->
+            <div class="mini-calendar" id="mini-cal-{{ pet.id }}">
+              <div class="mini-calendar-header">
+                <div class="mini-calendar-month">Next 15 Days</div>
+              </div>
+              <div class="mini-calendar-grid" id="mini-grid-{{ pet.id }}"></div>
+            </div>
+
+            <!-- ATTENDANCE & RESERVATIONS -->
+            <div class="pet-section">
+              <div class="pet-section-title">📅 Upcoming Reservations</div>
+              {% with pet_bookings=pet.servicebooking_set.all %}
+                {% if pet_bookings %}
+                  <ul class="reservations-list">
+                    {% for booking in pet_bookings|slice:":3" %}
+                      <li>
+                        <div>
+                          <strong>{{ booking.slot.service.type }}</strong>
+                          <br>
+                          <small>{{ booking.slot.date|date:"M d" }} at {{ booking.slot.start_time|time:"H:i" }}</small>
+                        </div>
+                        <span class="reservation-badge badge-{% if booking.status == 'confirmed' %}confirmed{% elif booking.status == 'pending' %}pending{% else %}cancelled{% endif %}">
+                          {% if booking.status == 'confirmed' %}Confirmed{% elif booking.status == 'pending' %}Pending{% else %}Rejected{% endif %}
+                        </span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <div style="color: var(--gray); font-size: 12px;">No reservations scheduled</div>
+                {% endif %}
+              {% endwith %}
+            </div>
+
+            <!-- CHECK-IN / CHECK-OUT -->
+            <div class="pet-section">
+              <div class="pet-section-title">⚡ Quick Actions</div>
+              <div class="pet-actions">
+                {% with checkin=pet_checkins|get_item:pet.id %}
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="pet_id" value="{{ pet.id }}">
+                    {% if checkin and checkin.is_present %}
+                      <button type="submit" name="action" value="checkout" class="pet-btn pet-btn-info">
+                        🚪 Check Out
+                      </button>
+                    {% else %}
+                      <button type="submit" name="action" value="checkin" class="pet-btn pet-btn-primary">
+                        🎉 Check In
+                      </button>
+                    {% endif %}
+                  </form>
+                {% endwith %}
+              </div>
+            </div>
+
+            <!-- PRIVATE MESSAGE TO TUTOR -->
+            <div class="pet-section">
+              <div class="pet-section-title">💌 Send Private Message</div>
+              <form method="post" enctype="multipart/form-data" class="private-message-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="woof">
+                <input type="hidden" name="pet_id" value="{{ pet.id }}">
+                <input type="hidden" name="visibility" value="private">
+                <textarea name="woof_message" placeholder="Send a private message to tutor..." class="message-textarea"></textarea>
+                <div class="message-form-row">
+                  <input type="file" name="woof_attachment" accept="image/*,video/*" class="message-file-input">
+                  <button type="submit" class="pet-btn pet-btn-primary">📨 Send</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: white;">
+          <p style="font-size: 18px;">No pets yet. Create your first pet to get started! 🐕</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- BROADCAST FORM -->
+      <h2 class="section-title">💬 Broadcast Updates</h2>
+      <div class="woof-form">
+        <h3>Send Global Update to All Tutors</h3>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="global_woof">
+          
+          <div class="form-group">
+            <label for="woof-message">Message</label>
+            <textarea id="woof-message" name="message" placeholder="What's happening at the daycare today?" rows="4" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="woof-photo">Photo/Video (optional)</label>
+            <input type="file" id="woof-photo" name="attachment" accept="image/*,video/*">
+          </div>
+
+          <div class="form-group">
+            <button type="submit">📤 Send Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // Mini Calendar Generator for Each Pet
+      const today = new Date();
+      
+      function renderMiniCalendar(petId, bookingsData) {
+        const container = document.getElementById(`mini-grid-${petId}`);
+        if (!container) return;
+
+        // Get today's date
+        let currentDate = new Date(today);
+        currentDate.setHours(0, 0, 0, 0);
+
+        // Day headers
+        const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        dayHeaders.forEach(day => {
+          const header = document.createElement('div');
+          header.className = 'mini-cal-day-header';
+          header.textContent = day;
+          container.appendChild(header);
+        });
+
+        // Get first day to show (accounting for starting position)
+        let firstDay = new Date(currentDate);
+        const dayOfWeek = firstDay.getDay();
+        firstDay.setDate(firstDay.getDate() - dayOfWeek);
+
+        // Generate 15 days starting from today
+        for (let i = 0; i < 15; i++) {
+          const date = new Date(firstDay);
+          date.setDate(date.getDate() + i);
+          date.setHours(0, 0, 0, 0);
+
+          const dayCell = document.createElement('div');
+          dayCell.className = 'mini-cal-day';
+          dayCell.textContent = date.getDate();
+
+          // Check if it's today
+          if (date.getTime() === currentDate.getTime()) {
+            dayCell.classList.add('today');
+          }
+
+          // Check if it's before today
+          if (date < currentDate) {
+            dayCell.classList.add('other-month');
+          }
+
+          // Check if pet has bookings on this date
+          const dateStr = date.toISOString().split('T')[0];
+          if (bookingsData && bookingsData[petId] && bookingsData[petId][dateStr]) {
+            const bookings = bookingsData[petId][dateStr];
+            const hasConfirmed = bookings.some(b => b.status === 'confirmed');
+            const hasPending = bookings.some(b => b.status === 'pending');
+            
+            dayCell.classList.add('has-booking');
+            if (hasConfirmed) {
+              dayCell.classList.add('confirmed');
+            } else if (hasPending) {
+              dayCell.classList.add('pending');
+            }
+          }
+
+          container.appendChild(dayCell);
+        }
+      }
+
+      // Load bookings data from backend
+      const petBookingsData = {{ pet_bookings_json|safe }};
+      
+      {% for pet in pets %}
+        renderMiniCalendar({{ pet.id }}, petBookingsData);
+      {% endfor %}
+
+      // Auto-refresh every 30 seconds
+      setInterval(() => {
+        location.reload();
+      }, 30000);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - {{ tutor.name }}</title>
+    {% load static %}
+    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <title>Tails Pets 🐕</title>
+    <link rel="stylesheet" href="{% static 'staff/dashboard.css' %}">
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>👤 My Profile</h1>
+        <div class="header-nav">
+          <a href="/tutor/?phone={{ tutor.phone }}" class="nav-btn">⬅ Back to Dashboard</a>
+        </div>
+      </header>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="message {% if message.tags %}{{ message.tags }}{% else %}success{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="pets-grid">
+        <div class="pet-card">
+          <div class="pet-card-header">
+            <div class="pet-name">Profile Information</div>
+            <div class="pet-info">Manage your contact information</div>
+          </div>
+          <div class="pet-card-body">
+            <div class="pet-section">
+              <div class="pet-section-title">📋 Personal Details</div>
+              <form method="post" class="private-message-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile">
+                <div class="message-form-row">
+                  <input type="text" name="name" value="{{ tutor.name }}" placeholder="Full Name" class="message-file-input" required>
+                </div>
+                <div class="message-form-row">
+                  <input type="email" name="email" value="{{ tutor.email }}" placeholder="Email Address" class="message-file-input">
+                  <input type="tel" name="phone" value="{{ tutor.phone }}" placeholder="Phone Number" class="message-file-input" required>
+                </div>
+                <textarea name="address" placeholder="Home Address" class="message-textarea">{{ tutor.address }}</textarea>
+                <div class="message-form-row">
+                  <button type="submit" class="pet-btn pet-btn-primary">💾 Save Profile</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="pet-section">
+              <div class="pet-section-title">📝 Additional Notes</div>
+              <form method="post" class="private-message-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile">
+                <textarea name="notes" placeholder="Emergency contacts, special requirements, etc." class="message-textarea">{{ tutor.notes }}</textarea>
+                <div class="message-form-row">
+                  <button type="submit" class="pet-btn pet-btn-primary">💾 Save Notes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

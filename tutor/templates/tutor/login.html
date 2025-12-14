@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tutor Login</title>
+    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <title>Tails Pets 🐕</title>
+</head>
+<body style="font-family: Arial; max-width: 400px; margin: 50px auto;">
+    <h1>🐕 Tutor Portal</h1>
+    
+    {% if error %}
+        <div style="color: red; background: #ffe6e6; padding: 10px; border-radius: 5px;">
+            {{ error }}
+        </div>
+    {% endif %}
+    
+    <form method="get" style="margin-top: 20px;">
+        <input name="phone" value="{{ phone }}" 
+               placeholder="Enter your phone number" 
+               style="width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px;">
+        <button type="submit" style="width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 5px; font-size: 16px; margin-top: 10px;">
+            Enter Portal 🐶
+        </button>
+    </form>
+    
+    <p style="margin-top: 20px; font-size: 14px; color: #666;">
+        Example: 912345678 or 21656564412
+    </p>
+</body>
+</html>

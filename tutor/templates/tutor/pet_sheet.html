@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ pet.name }} — Pet Profile</title>
+    {% load static %}
+    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <title>Tails Pets 🐕</title>
+    <link rel="stylesheet" href="{% static 'staff/dashboard.css' %}">
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🐾 {{ pet.name }} — Pet Profile</h1>
+        <div class="header-nav">
+          <a href="/tutor/?phone={{ tutor.phone }}" class="nav-btn">⬅ Back to Dashboard</a>
+        </div>
+      </header>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="message {% if message.tags %}{{ message.tags }}{% else %}success{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="pets-grid">
+        <div class="pet-card">
+          <div class="pet-card-header">
+            <div class="pet-name">{{ pet.name }}</div>
+            <div class="pet-info">Manage your pet's information</div>
+          </div>
+          <div class="pet-card-body">
+            <div class="pet-section">
+              <div class="pet-section-title">🧾 Pet Information</div>
+              <form method="post" enctype="multipart/form-data" class="private-message-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_pet">
+                <div class="message-form-row">
+                  <input type="text" name="name" value="{{ pet.name }}" placeholder="Name" class="message-file-input" required>
+                  <input type="text" name="chip_number" value="{{ pet.chip_number }}" placeholder="Chip Number" class="message-file-input">
+                </div>
+                <div class="message-form-row" style="align-items:center;gap:12px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    {% if pet.photo %}
+                      <img src="{{ pet.photo.url }}" alt="{{ pet.name }} photo" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--card-border);" />
+                    {% else %}
+                      <img src="{% static 'staff/dog_placeholder.svg' %}" alt="No photo" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);" />
+                    {% endif %}
+                  </div>
+                  <input type="file" name="photo" accept="image/*" class="message-file-input">
+                </div>
+                <div class="message-form-row">
+                  <input type="date" name="birthday" value="{{ pet.birthday|date:'Y-m-d' }}" class="message-file-input">
+                  <input type="text" name="species" value="{{ pet.species }}" placeholder="Species" class="message-file-input">
+                  <input type="text" name="breed" value="{{ pet.breed }}" placeholder="Breed" class="message-file-input">
+                </div>
+                <div class="message-form-row">
+                  <select name="sex" class="message-file-input">
+                    <option value="male" {% if pet.sex == 'male' %}selected{% endif %}>Male</option>
+                    <option value="female" {% if pet.sex == 'female' %}selected{% endif %}>Female</option>
+                    <option value="unknown" {% if pet.sex == 'unknown' %}selected{% endif %}>Unknown</option>
+                  </select>
+                  <label style="display:flex;align-items:center;gap:6px;">
+                    <input type="checkbox" name="neutered" {% if pet.neutered %}checked{% endif %}> Neutered
+                  </label>
+                </div>
+                <textarea name="allergies" placeholder="Known Allergies" class="message-textarea">{{ pet.allergies }}</textarea>
+                <textarea name="address" placeholder="Address" class="message-textarea">{{ pet.address }}</textarea>
+                <div class="message-form-row">
+                  <button type="submit" class="pet-btn pet-btn-primary">💾 Save Changes</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="pet-section">
+              <div class="pet-section-title">📝 Notes</div>
+              <form method="post" class="private-message-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_pet">
+                <textarea name="notes" placeholder="Notes" class="message-textarea">{{ pet.notes }}</textarea>
+                <div class="message-form-row">
+                  <button type="submit" class="pet-btn pet-btn-primary">💾 Save Notes</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="pet-section">
+              <div class="pet-section-title">🏫 Training Progress</div>
+              {% if training_entries %}
+                <ul class="reservations-list">
+                  {% for entry in training_entries %}
+                    <li>
+                      <div>
+                        <strong>{{ entry.title }}</strong>
+                        <br>
+                        <small>{{ entry.date|date:'Y-m-d' }}</small>
+                        {% if entry.notes %}
+                          <br>
+                          <small style="color: var(--gray);">{{ entry.notes }}</small>
+                        {% endif %}
+                      </div>
+                      <span class="reservation-badge badge-confirmed">{{ entry.progress }}%</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <div style="color: var(--gray); font-size: 12px;">No training entries yet.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

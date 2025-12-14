@@ -1,0 +1,652 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Woof Feed</title>
+    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <title>Tails Pets 🐕</title>
+    <link rel="stylesheet" href="{% static 'staff/style.css' %}">
+    <style>
+      :root {
+        --primary: #FF6B6B;
+        --secondary: #4ECDC4;
+        --success: #27AE60;
+        --warning: #E67E22;
+        --danger: #dc3545;
+        --info: #3498DB;
+        --dark: #2C3E50;
+        --light: #ECF0F1;
+        --gray: #95A5A6;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: var(--dark);
+      }
+
+      header {
+        background: white;
+        padding: 20px 30px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      header h1 {
+        font-size: 28px;
+        color: var(--secondary);
+        margin: 0;
+      }
+
+      .header-nav {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .nav-btn {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, var(--secondary) 0%, #45b8ae 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+      }
+
+      .nav-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(78, 205, 196, 0.3);
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 30px 20px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid #e0e0e0;
+        margin-bottom: 24px;
+        background: white;
+        border-radius: 8px 8px 0 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      }
+      .tab-btn {
+        padding: 15px 24px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        color: #666;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+      }
+      .tab-btn:hover {
+        color: var(--secondary);
+      }
+      .tab-btn.active {
+        color: var(--secondary);
+        border-bottom-color: var(--secondary);
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+
+      /* FEED STYLING */
+      .feed-wrapper {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+      }
+
+      .feed {
+        padding: 20px;
+      }
+
+      .feed-item {
+        background: white;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 20px;
+        margin-bottom: 16px;
+        border-radius: 8px;
+        border: 1px solid #eee;
+        transition: all 0.2s;
+      }
+
+      .feed-item:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: var(--secondary);
+      }
+
+      .feed-header {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .feed-header .label {
+        background: var(--info);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+      }
+
+      .feed-header strong {
+        color: var(--dark);
+        font-weight: 600;
+      }
+
+      .feed-header span {
+        color: var(--gray);
+        font-size: 12px;
+        margin-left: auto;
+      }
+
+      .media {
+        width: 100%;
+        max-height: 400px;
+        border-radius: 6px;
+        margin: 12px 0;
+        object-fit: cover;
+      }
+
+      .caption {
+        color: var(--dark);
+        margin: 12px 0;
+        line-height: 1.6;
+        font-size: 14px;
+      }
+
+      .reply {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #f0f0f0;
+      }
+
+      .reply-item {
+        background: #f9f9f9;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        font-size: 13px;
+      }
+
+      .reply-item-author {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 6px;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .reply-item-text {
+        color: var(--dark);
+        line-height: 1.5;
+      }
+
+      .reply-form {
+        margin-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .reply-form textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 13px;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 60px;
+      }
+
+      .reply-form textarea:focus {
+        outline: none;
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+      }
+
+      .reply-form button {
+        padding: 8px 16px;
+        background: var(--secondary);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.2s;
+      }
+
+      .reply-form button:hover {
+        background: #45b8ae;
+        transform: translateY(-2px);
+      }
+
+      @media (max-width: 768px) {
+        header {
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .header-nav {
+          justify-content: center;
+        }
+
+        .feed-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .feed-header span {
+          margin-left: 0;
+        }
+      }
+        .pets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .pet-card {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            transition: box-shadow 0.2s;
+        }
+        .pet-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        }
+        .pet-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        .pet-card-title {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .pet-card-title h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #000;
+        }
+        .pet-card-title p {
+            margin: 0;
+            font-size: 12px;
+            color: #999;
+        }
+        .pet-card-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .pet-card-status.in {
+            background: #d4edda;
+            color: #155724;
+        }
+        .pet-card-status.out {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .pet-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .pet-card-actions button {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+        }
+        .pet-card-actions form:first-child button {
+            background: var(--success, #27AE60);
+        }
+        .pet-card-actions form:first-child button:hover {
+            background: #229954;
+        }
+        .pet-card-actions form:last-child button {
+            background: var(--warning, #E67E22);
+        }
+        .pet-card-actions form:last-child button:hover {
+            background: #D35400;
+        }
+        }
+        .pet-card-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .pet-card-form textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+        }
+        .pet-card-form-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .pet-card-form select,
+        .pet-card-form input[type="file"],
+        .pet-card-form button {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .pet-card-form button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            flex: 1;
+            min-width: 100px;
+        }
+        .pet-card-form button:hover {
+            opacity: 0.9;
+        }
+        .pet-calendar {
+            margin: 16px 0;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary);
+        }
+        .pet-calendar h4 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            color: #333;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+            gap: 4px;
+        }
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .calendar-day.attended {
+            background: var(--success, #27AE60);
+            color: white;
+        }
+        .calendar-day.attended:hover {
+            box-shadow: 0 2px 6px rgba(39, 174, 96, 0.4);
+        }
+        .calendar-day.reserved {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .calendar-day.reserved.grooming {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        .calendar-day.reserved.training {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        .calendar-day.reserved:hover {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        .calendar-day .day-num {
+            font-size: 10px;
+            margin-bottom: 2px;
+        }
+        .calendar-day .day-status,
+        .calendar-day .day-icon {
+            font-size: 12px;
+        }
+        .broadcast-section {
+            background: linear-gradient(135deg, var(--primary), #ff8a8a);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .broadcast-section h3 {
+            margin-top: 0;
+            font-size: 16px;
+        }
+        .broadcast-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .broadcast-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            min-height: 70px;
+            background: rgba(255,255,255,0.95);
+        }
+        .broadcast-form-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .broadcast-form input[type="file"] {
+            color: white;
+        }
+        .broadcast-form button {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .broadcast-form button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🐾 Woof Feed</h1>
+        <div class="header-nav">
+          <a href="{% url 'staff:dashboard' %}" class="nav-btn">🏠 Dashboard</a>
+        </div>
+    </header>
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn" onclick="switchTab(event, 'feed')" style="display:none;">💬 Woof Feed</button>
+        </div>
+
+        <!-- WOOF FEED TAB -->
+        <div id="feed" class="tab-content active">
+          <div class="feed-wrapper">
+            <div class="feed" id="feed-container">
+                {% if feed_items %}
+                {% for item in feed_items %}
+                <div class="feed-item card" data-created-at="{{ item.created_at|date:'c' }}">
+                    <div class="feed-header">
+                        <span class="label">[{{ item.label }}]</span>
+                        <strong>{% if item.author.first_name %}{{ item.author.first_name }}{% else %}{{ item.author }}{% endif %}</strong>
+                        <span>{{ item.created_at|date:"M d, H:i" }}</span>
+                    </div>
+                {% if item.attachment %}
+                    {% if item.attachment.url|is_video %}
+                        <video class="media" src="{{ item.attachment.url }}" controls playsinline></video>
+                    {% elif item.attachment.url|is_image %}
+                        <img class="media" src="{{ item.attachment.url }}" alt="media">
+                    {% endif %}
+                {% endif %}
+                {% if item.message %}
+                <div class="caption">{{ item.message }}</div>
+                {% endif %}
+                {% if item.type == 'pet' %}
+                    {% with woof=item.obj %}
+                    <div class="reply">
+                        <strong style="display:block; margin-bottom:8px;">💬 Replies</strong>
+                        {% for r in woof.woof_set.all %}
+                            <div class="reply-item">
+                                <div class="reply-item-author">{% if r.tutor %}{{ r.tutor.name }}{% elif r.staff %}{{ r.staff.first_name }}{% else %}Reply{% endif %} · {{ r.created_at|date:"M d, H:i" }}</div>
+                                {% if r.attachment %}
+                                    {% if r.attachment.url|is_video %}
+                                        <video class="media" src="{{ r.attachment.url }}" controls playsinline></video>
+                                    {% elif r.attachment.url|is_image %}
+                                        <img class="media" src="{{ r.attachment.url }}" alt="reply media">
+                                    {% endif %}
+                                {% endif %}
+                                {% if r.message %}
+                                <div class="reply-item-text">{{ r.message }}</div>
+                                {% endif %}
+                            </div>
+                        {% empty %}
+                            <div class="reply-item-text" style="color: var(--gray-dark);">No replies yet.</div>
+                        {% endfor %}
+                        <form method="post" enctype="multipart/form-data" class="reply-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="woof_reply_staff">
+                            <input type="hidden" name="parent_woof_id" value="{{ woof.id }}">
+                            <textarea name="woof_message" placeholder="Reply to tutor..."></textarea>
+                            <div style="display:flex; gap:8px;">
+                                <input type="file" name="woof_attachment" accept="image/*,video/*" style="flex:1;">
+                                <button type="submit">Reply</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endwith %}
+                {% endif %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <div style="background: white; padding: 40px; border-radius: 8px; text-align: center; color: var(--gray);">
+                  <p style="font-size: 18px; margin: 0;">📭 No woofs yet.</p>
+                  <p style="font-size: 13px; margin-top: 10px;">Staff updates and pet woofs will appear here!</p>
+                </div>
+                {% endif %}
+                {% if has_next and feed_items %}
+                <div style="text-align:center; margin-top:24px;">
+                    <a href="?page={{ next_page }}" style="padding:10px 20px; border:1px solid #ddd; border-radius:6px; display:inline-block; color: var(--primary); text-decoration: none; font-weight: 600;">Load more</a>
+                </div>
+                {% endif %}
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(event, tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            if (event) event.target.classList.add('active');
+        }
+
+        (function(){
+            const feedEl = document.getElementById('feed-container');
+            if (!feedEl) return;
+            
+            function latestTimestamp(){
+                const first = feedEl.querySelector('.feed-item');
+                return first ? first.getAttribute('data-created-at') : null;
+            }
+            function renderItem(it){
+                const label = it.type === 'global' ? 'Business' : it.label;
+                const media = it.attachment_url ? (it.attachment_url.match(/\.(mp4|webm|mov|mkv)$/i) ? `<video class="media" src="${it.attachment_url}" controls playsinline></video>` : `<img class="media" src="${it.attachment_url}" alt="media">`) : '';
+                const msg = it.message ? `<div class="caption">${it.message}</div>` : '';
+                const html = `<div class="feed-item card" data-created-at="${it.created_at}">
+                    <div class="feed-header"><span class="label">[${label}]</span><strong>${it.author || 'Update'}</strong><span>${new Date(it.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span></div>
+                    ${media}
+                    ${msg}
+                </div>`;
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = html;
+                return wrapper.firstElementChild;
+            }
+            async function poll(){
+                const since = latestTimestamp();
+                try{
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('format','json');
+                    if(since) url.searchParams.set('since', since);
+                    const res = await fetch(url.toString());
+                    const data = await res.json();
+                    if(Array.isArray(data.items)){
+                        for(const it of data.items){
+                            const node = renderItem(it);
+                            feedEl.insertBefore(node, feedEl.firstChild);
+                        }
+                    }
+                }catch(e){/* ignore */}
+            }
+            setInterval(poll, 15000);
+        })();
+    </script>
+</body>
+</html>

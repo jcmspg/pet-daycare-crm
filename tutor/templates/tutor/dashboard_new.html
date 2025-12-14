@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tutor.name }}'s Pet Updates</title>
+    {% load static %}
+    {% load custom_filters %}
+    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <title>Tails Pets 🐕</title>
+    <link rel="stylesheet" href="{% static 'tutor/style.css' %}">
+    <style>
+      :root {
+        --primary: #FF6B6B;
+        --secondary: #4ECDC4;
+        --success: #27AE60;
+        --warning: #E67E22;
+        --danger: #dc3545;
+        --info: #3498DB;
+        --dark: #2C3E50;
+        --light: #ECF0F1;
+        --gray: #95A5A6;
+      }
+
+      header {
+        background: linear-gradient(135deg, var(--secondary) 0%, #45b8ae 100%);
+        padding: 40px 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      }
+
+      header h1 {
+        color: white;
+        font-size: 32px;
+        margin: 0 0 20px 0;
+        font-weight: 700;
+      }
+
+      .header-nav {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .header-btn {
+        padding: 12px 24px;
+        background: white;
+        color: var(--secondary);
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .header-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(255,255,255,0.3);
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 30px 20px;
+      }
+
+      /* TABS */
+      .tabs {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        border-bottom: 2px solid #e0e0e0;
+        padding: 0 0 10px 0;
+      }
+
+      .tab-btn {
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-weight: 600;
+        color: var(--gray);
+        cursor: pointer;
+        font-size: 15px;
+        transition: all 0.3s ease;
+      }
+
+      .tab-btn:hover {
+        color: var(--secondary);
+      }
+
+      .tab-btn.active {
+        color: var(--secondary);
+        border-bottom-color: var(--secondary);
+      }
+
+      .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      /* FEED STYLING */
+      .feed {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .feed-item {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+      }
+
+      .feed-item:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        transform: translateY(-3px);
+      }
+
+      .feed-header {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+      }
+
+      .label {
+        background: var(--secondary);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .feed-header strong {
+        font-size: 15px;
+        color: var(--dark);
+      }
+
+      .feed-header span {
+        color: var(--gray);
+        font-size: 13px;
+      }
+
+      .media {
+        width: 100%;
+        border-radius: 10px;
+        margin: 15px 0;
+        max-height: 400px;
+        object-fit: cover;
+      }
+
+      .caption {
+        color: var(--dark);
+        font-size: 15px;
+        line-height: 1.6;
+        margin: 15px 0;
+      }
+
+      .reply {
+        background: #f9f9f9;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 15px 0;
+      }
+
+      .reply-item {
+        padding: 12px;
+        background: white;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border-left: 3px solid var(--secondary);
+      }
+
+      .reply-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .reply-item-author {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--gray);
+        margin-bottom: 8px;
+      }
+
+      .reply-item-text {
+        font-size: 13px;
+        color: var(--dark);
+        line-height: 1.5;
+      }
+
+      .reply-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .reply-form textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 60px;
+        font-size: 13px;
+        transition: all 0.3s ease;
+      }
+
+      .reply-form textarea:focus {
+        outline: none;
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+      }
+
+      .reply-form input[type="file"] {
+        padding: 10px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+      }
+
+      .reply-form button {
+        padding: 12px 20px;
+        background: var(--secondary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .reply-form button:hover {
+        background: #45b8ae;
+        transform: translateY(-2px);
+      }
+
+      /* CALENDAR SECTION */
+      .calendar-section {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      }
+
+      .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+      }
+
+      .calendar-header h3 {
+        font-size: 20px;
+        color: var(--dark);
+        margin: 0;
+      }
+
+      .nav-btn {
+        background: var(--secondary);
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .nav-btn:hover {
+        background: #45b8ae;
+        transform: scale(1.05);
+      }
+
+      .calendar-weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .calendar-weekdays div {
+        text-align: center;
+        font-weight: 700;
+        color: var(--gray);
+        font-size: 13px;
+        text-transform: uppercase;
+        padding: 10px;
+      }
+
+      .calendar-days {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+      }
+
+      .calendar-day-cell {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        cursor: pointer;
+        background: #f9f9f9;
+        border: 2px solid #e0e0e0;
+        transition: all 0.3s ease;
+        position: relative;
+        font-weight: 600;
+      }
+
+      .calendar-day-cell:hover {
+        border-color: var(--secondary);
+        background: white;
+        transform: scale(1.05);
+      }
+
+      .calendar-day-cell.other-month {
+        opacity: 0.3;
+        cursor: default;
+      }
+
+      .calendar-day-cell.other-month:hover {
+        transform: scale(1);
+      }
+
+      .calendar-day-cell.has-confirmed-booking {
+        background: linear-gradient(135deg, var(--success) 0%, #229954 100%);
+        color: white;
+        border-color: var(--success);
+      }
+
+      .calendar-day-cell.has-pending-booking {
+        background: linear-gradient(135deg, var(--warning) 0%, #d68910 100%);
+        color: white;
+        border-color: var(--warning);
+      }
+
+      .calendar-day-cell.has-rejected-booking {
+        background: linear-gradient(135deg, var(--danger) 0%, #c82333 100%);
+        color: white;
+        border-color: var(--danger);
+      }
+
+      .booking-status {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+      }
+
+      .calendar-day-cell.has-pending-booking .booking-status {
+        animation: pulse 2s infinite;
+      }
+
+      /* MODAL */
+      .slot-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.6);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .slot-modal.show {
+        display: flex;
+      }
+
+      .modal-content {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        animation: slideUp 0.3s ease;
+      }
+
+      @keyframes slideUp {
+        from {
+          transform: translateY(30px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .modal-header {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--gray);
+      }
+
+      .service-selection {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .service-btn {
+        padding: 15px;
+        background: #f9f9f9;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .service-btn:hover {
+        border-color: var(--secondary);
+        background: white;
+      }
+
+      .service-btn.selected {
+        background: var(--secondary);
+        color: white;
+        border-color: var(--secondary);
+      }
+
+      .time-slots-container {
+        display: none;
+        margin-bottom: 20px;
+      }
+
+      .time-slot-option {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 12px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        margin-bottom: 10px;
+      }
+
+      .time-slot-option input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+      }
+
+      .time-slot-option label {
+        flex: 1;
+        cursor: pointer;
+        font-weight: 500;
+      }
+
+      .time-slot-btn {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 10px;
+        background: #f9f9f9;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .time-slot-btn:hover {
+        border-color: var(--secondary);
+        background: white;
+      }
+
+      .time-slot-btn.selected {
+        background: var(--secondary);
+        color: white;
+        border-color: var(--secondary);
+      }
+
+      .booking-form-container {
+        display: none;
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 10px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--dark);
+        font-size: 14px;
+      }
+
+      .form-group select, .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+
+      .form-group select:focus, .form-group textarea:focus {
+        outline: none;
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      .booking-submit {
+        width: 100%;
+        padding: 14px;
+        background: var(--secondary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+      }
+
+      .booking-submit:hover {
+        background: #45b8ae;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(78, 205, 196, 0.3);
+      }
+
+      @media (max-width: 768px) {
+        header h1 {
+          font-size: 24px;
+        }
+
+        .header-nav {
+          justify-content: space-between;
+        }
+
+        .modal-content {
+          margin: 20px;
+          max-width: 100%;
+        }
+
+        .calendar-days {
+          gap: 5px;
+        }
+
+        .tabs {
+          gap: 10px;
+        }
+
+        .tab-btn {
+          padding: 10px 16px;
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>🐕 {{ tutor.name }}'s Pet Updates</h1>
+      <div class="header-nav">
+        <button class="header-btn" onclick="switchTab(event, 'feed-tab')">📰 Feed</button>
+        <button class="header-btn" onclick="switchTab(event, 'schedule-tab')">📅 Schedule</button>
+        <a href="/tutor/profile/?phone={{ tutor.phone }}" class="header-btn">👤 My Profile</a>
+        <a href="/tutor/logout" class="header-btn" style="background: #FF6B6B; color: white;">🚪 Logout</a>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- TABS NAVIGATION -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'feed-tab')">📰 Feed & Updates</button>
+        <button class="tab-btn" onclick="switchTab(event, 'schedule-tab')">📅 Schedule & Bookings</button>
+      </div>
+
+      <!-- FEED TAB -->
+      <div id="feed-tab" class="tab-content active">
+        <h2 style="font-size: 24px; margin-bottom: 20px; color: var(--dark);">Your Pets</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+          {% for pet in pets %}
+          <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              {% if pet.photo %}
+                <img src="{{ pet.photo.url }}" alt="{{ pet.name }} photo" style="width:50px;height:50px;object-fit:cover;border-radius:50%;border:2px solid var(--secondary);" />
+              {% else %}
+                <img src="{% static 'staff/dog_placeholder.svg' %}" alt="No photo" style="width:50px;height:50px;border-radius:50%;border:2px solid var(--secondary);background:#f0f0f0;" />
+              {% endif %}
+              <div style="flex: 1;">
+                <div style="font-weight: 700; font-size: 18px; color: var(--dark);">{{ pet.name }}</div>
+                <div style="font-size: 12px; color: var(--gray);">{{ pet.species|default:"Pet" }}</div>
+              </div>
+            </div>
+            {% with checkin=pet_checkins|get_item:pet.id %}
+              {% if checkin and checkin.is_present %}
+                <div style="background: var(--success); color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; text-align: center; margin-bottom: 12px;">
+                  ✅ In Daycare
+                </div>
+              {% else %}
+                <div style="background: var(--gray); color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; text-align: center; margin-bottom: 12px;">
+                  🏠 At Home
+                </div>
+              {% endif %}
+            {% endwith %}
+            <a href="/tutor/pet/{{ pet.id }}/?phone={{ tutor.phone }}" style="display: block; background: var(--secondary); color: white; text-align: center; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
+              🐾 View Profile
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+
+        <h2 style="font-size: 24px; margin-bottom: 20px; color: var(--dark);">Recent Updates from {{ business.name|default:"Your Daycare" }}</h2>
+        {% if feed %}
+        <div class="feed">
+        {% for item in feed %}
+        <div class="feed-item">
+          <div class="feed-header">
+            <span class="label">[{% if item.kind == 'business' %}{{ business.name|default:'Business' }}{% else %}{{ item.label }}{% endif %}]</span>
+            <strong>
+              {% if item.author_staff %}{{ item.author_staff.first_name }}{% elif item.author_tutor %}{{ item.author_tutor.name }}{% else %}Update{% endif %}
+            </strong>
+            <span>{{ item.created_at|date:"M d, H:i" }}</span>
+          </div>
+
+          {% if item.attachment %}
+            {% if item.attachment.url|is_video %}
+              <video class="media" controls playsinline>
+                <source src="{{ item.attachment.url }}" type="video/mp4">
+              </video>
+            {% elif item.attachment.url|is_image %}
+              <img class="media" src="{{ item.attachment.url }}" alt="attachment" />
+            {% else %}
+              <a href="{{ item.attachment.url }}" target="_blank">📎 Attachment</a>
+            {% endif %}
+          {% endif %}
+
+          {% if item.message %}
+          <div class="caption">{{ item.message }}</div>
+          {% endif %}
+
+          {% if item.woof or item.global %}
+          <div class="reply">
+            {% if item.woof %}
+              {% for reply in item.woof.woof_set.all %}
+              <div class="reply-item">
+                <div class="reply-item-author">{% if reply.staff %}{{ reply.staff.first_name }}{% elif reply.tutor %}{{ reply.tutor.name }}{% else %}Reply{% endif %} · {{ reply.created_at|time:"H:i" }}</div>
+                {% if reply.attachment %}
+                  {% if reply.attachment.url|is_video %}
+                    <video class="media" controls playsinline style="max-height: 250px;">
+                      <source src="{{ reply.attachment.url }}" type="video/mp4">
+                    </video>
+                  {% elif reply.attachment.url|is_image %}
+                    <img class="media" src="{{ reply.attachment.url }}" alt="attachment" style="max-height: 250px;" />
+                  {% else %}
+                    <a href="{{ reply.attachment.url }}" target="_blank">📎 Attachment</a>
+                  {% endif %}
+                {% endif %}
+                {% if reply.message %}
+                <div class="reply-item-text">{{ reply.message }}</div>
+                {% endif %}
+              </div>
+              {% empty %}
+              <div style="font-size:12px; color:#888;">No replies yet.</div>
+              {% endfor %}
+            {% endif %}
+            {% if item.global %}
+              {% for reply in item.global.woof_set.all %}
+              <div class="reply-item">
+                <div class="reply-item-author">{% if reply.staff %}{{ reply.staff.first_name }}{% elif reply.tutor %}{{ reply.tutor.name }}{% else %}Reply{% endif %} · {{ reply.created_at|time:"H:i" }}</div>
+                {% if reply.attachment %}
+                  {% if reply.attachment.url|is_video %}
+                    <video class="media" controls playsinline style="max-height: 250px;">
+                      <source src="{{ reply.attachment.url }}" type="video/mp4">
+                    </video>
+                  {% elif reply.attachment.url|is_image %}
+                    <img class="media" src="{{ reply.attachment.url }}" alt="attachment" style="max-height: 250px;" />
+                  {% else %}
+                    <a href="{{ reply.attachment.url }}" target="_blank">📎 Attachment</a>
+                  {% endif %}
+                {% endif %}
+                {% if reply.message %}
+                <div class="reply-item-text">{{ reply.message }}</div>
+                {% endif %}
+              </div>
+              {% empty %}
+              <div style="font-size:12px; color:#888;">No replies yet.</div>
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          <form class="reply-form" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if item.woof %}
+            <input type="hidden" name="action" value="woof_reply_tutor">
+            <input type="hidden" name="parent_woof_id" value="{{ item.woof.id }}">
+            {% elif item.global %}
+            <input type="hidden" name="action" value="woof_reply_global">
+            <input type="hidden" name="global_woof_id" value="{{ item.global.id }}">
+            {% endif %}
+            <textarea name="woof_message" placeholder="Reply..." maxlength="140" required></textarea>
+            <input type="file" name="woof_attachment" accept="image/*,video/*" />
+            <button type="submit">💬 Reply</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="text-align: center; padding: 40px; color: var(--gray);">
+        <p style="font-size: 16px;">No updates yet. Check back soon! 🐾</p>
+      </div>
+      {% endif %}
+      </div><!-- end feed-tab -->
+
+      <!-- SCHEDULE TAB -->
+      <div id="schedule-tab" class="tab-content">
+        <h2 style="font-size: 24px; margin-bottom: 20px; color: var(--dark);">📅 Book Services for Your Pets</h2>
+        
+        <!-- CALENDAR MONTH VIEW -->
+        <div class="calendar-section">
+          <div class="calendar-header">
+            <button class="nav-btn" id="prev-month" onclick="previousMonth()">← Previous</button>
+            <h3 id="month-year"></h3>
+            <button class="nav-btn" id="next-month" onclick="nextMonth()">Next →</button>
+          </div>
+          
+          <div class="calendar-weekdays">
+            <div>Sunday</div>
+            <div>Monday</div>
+            <div>Tuesday</div>
+            <div>Wednesday</div>
+            <div>Thursday</div>
+            <div>Friday</div>
+            <div>Saturday</div>
+          </div>
+          
+          <div class="calendar-days" id="calendar-days"></div>
+        </div>
+        
+        <!-- SLOT PICKER MODAL -->
+        <div class="slot-modal" id="slot-modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <span>Book Service for <span id="selected-date-display"></span></span>
+              <button class="modal-close" onclick="closeSlotModal()">✕</button>
+            </div>
+            
+            <!-- SERVICE TYPE SELECTION -->
+            <div id="service-selection-container">
+              <label style="display: block; margin-bottom: 12px; font-weight: 600; color: var(--dark);">Select Service Type</label>
+              <div class="service-selection" id="service-selection"></div>
+            </div>
+            
+            <!-- TIME SLOTS -->
+            <div class="time-slots-container" id="time-slots-container"></div>
+            
+            <!-- BOOKING FORM -->
+            <div class="booking-form-container" id="booking-form-container">
+              <form method="post" id="booking-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="book_service">
+                <input type="hidden" name="selected_slots" id="selected-slots-input">
+                <input type="hidden" name="selected_service_type" id="selected-service-type-input">
+                
+                <div class="form-group">
+                  <label>Select Your Pet</label>
+                  <select name="pet_id" required>
+                    <option value="">-- Choose a pet --</option>
+                    {% for pet in pets %}
+                    <option value="{{ pet.id }}">{{ pet.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label>Notes (Optional)</label>
+                  <textarea name="booking_notes" placeholder="Any special instructions or notes..."></textarea>
+                </div>
+                
+                <button type="submit" class="booking-submit">📅 Confirm Booking</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div><!-- end schedule-tab -->
+    </div>
+
+    <script>
+      let currentDate = new Date();
+      let selectedDate = null;
+      const slotsData = {{ slots_json|safe }};
+      const bookingsData = {{ bookings_json|safe }};
+      let selectedServiceType = null;
+      let selectedSlots = [];
+
+      function switchTab(event, tabName) {
+        event.preventDefault();
+        
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+          tab.classList.remove('active');
+        });
+        
+        // Remove active state from all buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        
+        // Show selected tab
+        document.getElementById(tabName).classList.add('active');
+        
+        // Add active state to clicked button
+        event.target.classList.add('active');
+        
+        // Render calendar when switching to schedule tab
+        if (tabName === 'schedule-tab') {
+          renderCalendar();
+        }
+      }
+
+      function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        document.getElementById('month-year').textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDayOfWeek = firstDay.getDay();
+        
+        const container = document.getElementById('calendar-days');
+        container.innerHTML = '';
+        
+        // Previous month days
+        const prevMonthDays = new Date(year, month, 0).getDate();
+        for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+          const dayCell = document.createElement('div');
+          dayCell.className = 'calendar-day-cell other-month';
+          dayCell.textContent = prevMonthDays - i;
+          container.appendChild(dayCell);
+        }
+        
+        // Current month days
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dayCell = document.createElement('div');
+          dayCell.className = 'calendar-day-cell';
+          dayCell.textContent = day;
+          
+          const dateObj = new Date(year, month, day);
+          const dateStr = dateObj.toISOString().split('T')[0];
+          
+          // Check for bookings
+          if (bookingsData[dateStr]) {
+            const bookings = bookingsData[dateStr];
+            const hasConfirmed = bookings.some(b => b.status === 'confirmed');
+            const hasPending = bookings.some(b => b.status === 'pending');
+            const hasRejected = bookings.some(b => b.status === 'rejected');
+            
+            if (hasConfirmed) {
+              dayCell.classList.add('has-confirmed-booking');
+            } else if (hasPending) {
+              dayCell.classList.add('has-pending-booking');
+            } else if (hasRejected) {
+              dayCell.classList.add('has-rejected-booking');
+            }
+          }
+          
+          // Check if date has slots available
+          if (slotsData[dateStr]) {
+            dayCell.style.cursor = 'pointer';
+            dayCell.onclick = () => selectDay(day, dateObj);
+          } else {
+            dayCell.style.opacity = '0.5';
+            dayCell.style.cursor = 'default';
+          }
+          
+          container.appendChild(dayCell);
+        }
+        
+        // Next month days
+        const totalCells = container.children.length;
+        const remainingCells = 42 - totalCells;
+        for (let i = 1; i <= remainingCells; i++) {
+          const dayCell = document.createElement('div');
+          dayCell.className = 'calendar-day-cell other-month';
+          dayCell.textContent = i;
+          container.appendChild(dayCell);
+        }
+      }
+
+      function selectDay(day, dateObj) {
+        const dateStr = dateObj.toISOString().split('T')[0];
+        if (!slotsData[dateStr]) {
+          alert('No services available on this date.');
+          return;
+        }
+        
+        selectedDate = dateObj;
+        selectedServiceType = null;
+        selectedSlots = [];
+        
+        document.getElementById('selected-date-display').textContent = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        
+        // Show service selection
+        selectServiceType = selectServiceTypeFunc;
+        showServiceSelection(dateStr);
+        
+        document.getElementById('slot-modal').classList.add('show');
+      }
+
+      function showServiceSelection(dateStr) {
+        const slots = slotsData[dateStr] || [];
+        const serviceTypes = [...new Set(slots.map(s => s.service_type))];
+        
+        const container = document.getElementById('service-selection');
+        container.innerHTML = '';
+        
+        serviceTypes.forEach(serviceType => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'service-btn';
+          btn.textContent = serviceType.toUpperCase();
+          btn.onclick = (e) => {
+            e.preventDefault();
+            selectServiceTypeFunc(serviceType, dateStr);
+          };
+          container.appendChild(btn);
+        });
+      }
+
+      function selectServiceTypeFunc(serviceType, dateStr) {
+        selectedServiceType = serviceType;
+        document.getElementById('selected-service-type-input').value = serviceType;
+        
+        // Update UI
+        document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('selected'));
+        event.target.classList.add('selected');
+        
+        const slots = slotsData[dateStr].filter(s => s.service_type === serviceType);
+        const timeSlotsContainer = document.getElementById('time-slots-container');
+        timeSlotsContainer.innerHTML = '';
+        
+        if (serviceType === 'daycare') {
+          // Daycare: allow morning and afternoon selection
+          const periods = {};
+          slots.forEach(slot => {
+            const hour = parseInt(slot.start_time.split(':')[0]);
+            const period = hour < 12 ? 'morning' : 'afternoon';
+            if (!periods[period]) periods[period] = [];
+            periods[period].push(slot);
+          });
+          
+          Object.entries(periods).forEach(([period, periodSlots]) => {
+            const label = period.charAt(0).toUpperCase() + period.slice(1);
+            periodSlots.forEach(slot => {
+              const checkboxContainer = document.createElement('div');
+              checkboxContainer.className = 'time-slot-option';
+              
+              const checkbox = document.createElement('input');
+              checkbox.type = 'checkbox';
+              checkbox.id = `period-${slot.id}`;
+              checkbox.value = slot.id;
+              checkbox.onchange = (e) => {
+                if (e.target.checked) {
+                  selectedSlots.push(slot.id);
+                } else {
+                  selectedSlots = selectedSlots.filter(id => id !== slot.id);
+                }
+                document.getElementById('selected-slots-input').value = JSON.stringify(selectedSlots);
+              };
+              
+              const label_elem = document.createElement('label');
+              label_elem.htmlFor = `period-${slot.id}`;
+              label_elem.innerHTML = `${label} (${slot.start_time} - ${slot.end_time}) <small style="color: #999;">(${slot.available_spots} spots)</small>`;
+              
+              checkboxContainer.appendChild(checkbox);
+              checkboxContainer.appendChild(label_elem);
+              timeSlotsContainer.appendChild(checkboxContainer);
+            });
+          });
+        } else {
+          // Other services: single selection
+          selectedSlots = [];
+          slots.forEach(slot => {
+            const slotBtn = document.createElement('button');
+            slotBtn.type = 'button';
+            slotBtn.className = 'time-slot-btn';
+            slotBtn.innerHTML = `${slot.start_time} - ${slot.end_time}<br><small>${slot.available_spots} spots left</small>`;
+            slotBtn.onclick = (e) => {
+              e.preventDefault();
+              selectedSlots = [slot.id];
+              document.getElementById('selected-slots-input').value = JSON.stringify(selectedSlots);
+              
+              // Highlight selected
+              document.querySelectorAll('.time-slot-btn').forEach(btn => btn.classList.remove('selected'));
+              slotBtn.classList.add('selected');
+            };
+            timeSlotsContainer.appendChild(slotBtn);
+          });
+        }
+        
+        timeSlotsContainer.style.display = 'block';
+        document.getElementById('booking-form-container').style.display = 'block';
+      }
+
+      function closeSlotModal() {
+        document.getElementById('slot-modal').classList.remove('show');
+        selectedDate = null;
+        selectedServiceType = null;
+        selectedSlots = [];
+      }
+
+      function previousMonth() {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+      }
+
+      function nextMonth() {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+      }
+
+      // Initialize calendar on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        // Calendar will be rendered when tab is opened
+      });
+
+      // Close modal when clicking outside
+      document.getElementById('slot-modal').addEventListener('click', function(event) {
+        if (event.target === this) {
+          closeSlotModal();
+        }
+      });
+
+      // Auto-refresh feed every 30 seconds
+      setInterval(() => {
+        const feedTab = document.getElementById('feed-tab');
+        if (feedTab.classList.contains('active')) {
+          location.reload();
+        }
+      }, 30000);
+    </script>
+  </body>
+</html>
