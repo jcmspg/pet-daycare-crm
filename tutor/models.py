@@ -1,5 +1,5 @@
 from django.db import models
-from pets.models import Pet
+from pets.models import Pet, Business
 
 # Create your models here.
 class PetPhoto(models.Model):
@@ -10,6 +10,7 @@ class PetPhoto(models.Model):
     uploaded_by = models.ForeignKey('auth.User', on_delete=models.CASCADE)
 
 class Woof(models.Model):
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='pet_woofs', null=True, blank=True)
     pet = models.ForeignKey(Pet, on_delete=models.CASCADE)
     message = models.CharField(max_length=280)  # Twitter limit
     created_at = models.DateTimeField(auto_now_add=True)
@@ -31,6 +32,7 @@ class WoofLog(models.Model):
     ip_address = models.GenericIPAddressField(null=True)
 
 class GlobalWoof(models.Model):
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='global_woofs', null=True, blank=True)
     message = models.CharField(max_length=280)
     created_at = models.DateTimeField(auto_now_add=True)
     staff = models.ForeignKey('auth.User', on_delete=models.CASCADE)

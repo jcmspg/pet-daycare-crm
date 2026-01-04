@@ -6,26 +6,37 @@ from django.core import serializers
 import json
 from pets.models import Tutor, Pet, TrainingProgress
 from reservations.models import CheckIn, TutorSchedule, Service, ServiceSlot, ServiceBooking
+from reservations.utils import ensure_service_slots_exist
 from .models import Woof, GlobalWoof
 from pets.models import Business
 from datetime import datetime, timedelta
 
 def tutor_dashboard(request):
-    phone = request.GET.get('phone', '').strip()
+    """Tutor dashboard - requires authentication"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to access your dashboard.')
+        return redirect('account_login')
     
-    if not phone:
-        return render(request, 'tutor/login.html')
+    # Get tutor from authenticated user
+    if hasattr(request.user, 'tutor_profile') and request.user.tutor_profile:
+        tutor = request.user.tutor_profile
+    else:
+        messages.error(request, 'You are not authorized to access this dashboard.')
+        return redirect('home:index')
     
-    tutor = Tutor.objects.filter(phone__icontains=phone).first()
+    # Get tutor's business
+    business = tutor.business
     
-    if not tutor:
-        return render(request, 'tutor/login.html', {
-            'phone': phone,
-            'error': 'Tutor not found. Try again.'
-        })
+    # Automatically ensure service slots exist for next 30 days (business-scoped)
+    ensure_service_slots_exist(business=business)
     
     pets = tutor.pets.all()
-    business = Business.objects.first()
+    
+    # SECURITY: Verify all pets belong to this tutor and business
+    for pet in pets:
+        if tutor not in pet.tutors.all() or pet.business != business:
+            messages.error(request, 'Security error: Pet access denied.')
+            return redirect('home:index')
     
     # MATCH STAFF LOGIC - create pet_checkins dict
     pet_checkins = {}
@@ -33,12 +44,18 @@ def tutor_dashboard(request):
         checkins = CheckIn.objects.filter(pet=pet).order_by('-checkin_time')
         pet_checkins[pet.id] = checkins.first() if checkins.exists() else None
     
-    # Build unified feed: pet woofs + global woofs, newest first
-    # Public woofs + private woofs for this tutor's pets
-    pet_woofs = Woof.objects.filter(pet__in=pets, parent_woof__isnull=True).filter(
+    # Build unified feed: pet woofs + global woofs (business-scoped only!)
+    # Pet woofs: only for this tutor's pets
+    pet_woofs = Woof.objects.filter(
+        business=business,
+        pet__in=pets, 
+        parent_woof__isnull=True
+    ).filter(
         Q(visibility='public') | Q(visibility='private')
     )
-    global_woofs = GlobalWoof.objects.all()
+    
+    # Global woofs: only for this business!
+    global_woofs = GlobalWoof.objects.filter(business=business)
     feed = []
     for w in pet_woofs:
         feed.append({
@@ -74,11 +91,12 @@ def tutor_dashboard(request):
             parent = Woof.objects.get(id=parent_id)
         except Woof.DoesNotExist:
             messages.error(request, 'Original woof not found.')
-            return redirect(request.path + f'?phone={phone}')
+            return redirect('tutor:dashboard')
         if not message and not attachment:
             messages.error(request, 'Reply cannot be empty.')
-            return redirect(request.path + f'?phone={phone}')
+            return redirect('tutor:dashboard')
         Woof.objects.create(
+            business=business,
             pet=parent.pet,
             message=message or '',
             tutor=tutor,
@@ -86,7 +104,7 @@ def tutor_dashboard(request):
             attachment=attachment
         )
         messages.success(request, 'Reply sent!')
-        return redirect(request.path + f'?phone={phone}')
+        return redirect('tutor:dashboard')
     
     # Tutor replies to global woofs
     if request.method == 'POST' and request.POST.get('action') == 'woof_reply_global':
@@ -97,14 +115,15 @@ def tutor_dashboard(request):
             global_woof = GlobalWoof.objects.get(id=global_id)
         except GlobalWoof.DoesNotExist:
             messages.error(request, 'Global woof not found.')
-            return redirect(request.path + f'?phone={phone}')
+            return redirect('tutor:dashboard')
         if not message and not attachment:
             messages.error(request, 'Reply cannot be empty.')
-            return redirect(request.path + f'?phone={phone}')
+            return redirect('tutor:dashboard')
         # For global replies, use the first pet or None (if we make pet optional)
         # For now, use first pet from tutor's pets
         pet = tutor.pets.first() if tutor.pets.exists() else None
         Woof.objects.create(
+            business=business,
             pet=pet,
             message=message or '',
             tutor=tutor,
@@ -112,8 +131,7 @@ def tutor_dashboard(request):
             attachment=attachment,
         )
         messages.success(request, 'Reply sent!')
-        return redirect(request.path + f'?phone={phone}')
-    
+        return redirect('tutor:dashboard')
     # Handle service booking requests
     if request.method == 'POST' and request.POST.get('action') == 'book_service':
         selected_slots_json = request.POST.get('selected_slots', '[]')
@@ -126,13 +144,14 @@ def tutor_dashboard(request):
             slot_ids = json.loads(selected_slots_json)
             if not slot_ids:
                 messages.error(request, 'Please select at least one time slot.')
-                return redirect(request.path + f'?phone={phone}')
+                return redirect('tutor:dashboard')
             
             pet = Pet.objects.get(id=pet_id)
             
-            if pet not in pets:
-                messages.error(request, 'Pet not found in your pets.')
-                return redirect(request.path + f'?phone={phone}')
+            # SECURITY: Verify pet belongs to this tutor AND this business
+            if pet not in pets or pet.business != business:
+                messages.error(request, 'Pet access denied or pet not in your business.')
+                return redirect('tutor:dashboard')
             
             booked_count = 0
             failed_slots = []
@@ -140,6 +159,11 @@ def tutor_dashboard(request):
             for slot_id in slot_ids:
                 try:
                     slot = ServiceSlot.objects.get(id=slot_id)
+                    
+                    # SECURITY: Verify slot belongs to this business!
+                    if slot.business != business:
+                        failed_slots.append(f'{slot.start_time} - {slot.end_time} (business mismatch)')
+                        continue
                     
                     if slot.is_fully_booked():
                         failed_slots.append(f'{slot.start_time} - {slot.end_time}')
@@ -170,17 +194,18 @@ def tutor_dashboard(request):
                 msg = f'⚠️ Could not book: {", ".join(failed_slots)} (already booked or full)'
                 messages.warning(request, msg)
             
-            return redirect(request.path + f'?phone={phone}')
+            return redirect('tutor:dashboard')
         except (Pet.DoesNotExist, json.JSONDecodeError):
             messages.error(request, 'Invalid request data.')
-            return redirect(request.path + f'?phone={phone}')
+            return redirect('tutor:dashboard')
     
-    # Get available service slots for next 30 days
+    # Get available service slots for next 30 days (business-scoped)
     today = datetime.now().date()
     next_30_days = [today + timedelta(days=i) for i in range(30)]
     
-    # Get all available service slots
+    # Get all available service slots for this business only
     available_slots = ServiceSlot.objects.filter(
+        business=business,
         date__gte=today,
         date__lte=today + timedelta(days=29),
         is_available=True
@@ -251,16 +276,17 @@ def tutor_dashboard(request):
     })
 
 def tutor_profile(request):
-    phone = request.GET.get('phone', '').strip()
+    """Tutor profile view - requires authentication"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to access your profile.')
+        return redirect('account_login')
     
-    if not phone:
-        return redirect('tutor:dashboard')
-    
-    tutor = Tutor.objects.filter(phone__icontains=phone).first()
-    
-    if not tutor:
-        messages.error(request, 'Tutor not found.')
-        return redirect('tutor:dashboard')
+    # Get tutor from authenticated user
+    if hasattr(request.user, 'tutor_profile') and request.user.tutor_profile:
+        tutor = request.user.tutor_profile
+    else:
+        messages.error(request, 'You are not authorized to access this profile.')
+        return redirect('home:index')
     
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -272,30 +298,33 @@ def tutor_profile(request):
             tutor.notes = request.POST.get('notes', '')
             tutor.save()
             messages.success(request, 'Profile updated successfully!')
-        return redirect(f'/tutor/profile/?phone={phone}')
+        return redirect('tutor:profile')
     
     return render(request, 'tutor/profile.html', {
         'tutor': tutor,
     })
 
 def tutor_pet_sheet(request, pet_id):
-    phone = request.GET.get('phone', '').strip()
+    """Pet details view - requires authentication and business access"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to access pet details.')
+        return redirect('account_login')
     
-    if not phone:
-        return redirect('tutor:dashboard')
+    # Get tutor from authenticated user
+    if hasattr(request.user, 'tutor_profile') and request.user.tutor_profile:
+        tutor = request.user.tutor_profile
+    else:
+        messages.error(request, 'You are not authorized to access this resource.')
+        return redirect('home:index')
     
-    tutor = Tutor.objects.filter(phone__icontains=phone).first()
-    
-    if not tutor:
-        messages.error(request, 'Tutor not found.')
-        return redirect('tutor:dashboard')
+    business = tutor.business
     
     pet = get_object_or_404(Pet, id=pet_id)
     
-    # Verify tutor owns this pet
-    if pet not in tutor.pets.all():
-        messages.error(request, 'You do not have access to this pet.')
-        return redirect(f'/tutor/?phone={phone}')
+    # SECURITY: Verify pet belongs to this tutor AND this business
+    if pet not in tutor.pets.all() or pet.business != business:
+        messages.error(request, 'Pet access denied or pet not in your business.')
+        return redirect('tutor:dashboard')
     
     if request.method == 'POST':
         action = request.POST.get('action')

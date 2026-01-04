@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CheckIn, PetAttendance, PetReservation, TutorSchedule, Service, ServiceSlot, ServiceBooking
+from .models import CheckIn, PetAttendance, PetReservation, TutorSchedule, Service, ServiceSlot, ServiceBooking, BusinessUnavailableDay
 
 @admin.register(CheckIn)
 class CheckInAdmin(admin.ModelAdmin):
@@ -31,9 +31,9 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(ServiceSlot)
 class ServiceSlotAdmin(admin.ModelAdmin):
-    list_display = ('service', 'date', 'start_time', 'end_time', 'booked_count', 'max_capacity', 'is_available')
-    list_filter = ('service', 'date', 'is_available')
-    search_fields = ('service__type',)
+    list_display = ('service', 'business', 'date', 'start_time', 'end_time', 'booked_count', 'max_capacity', 'is_available')
+    list_filter = ('service', 'business', 'date', 'is_available')
+    search_fields = ('service__type', 'business__name')
     readonly_fields = ('booked_count',)
 
 @admin.register(ServiceBooking)
@@ -42,3 +42,10 @@ class ServiceBookingAdmin(admin.ModelAdmin):
     list_filter = ('status', 'slot__service', 'slot__date')
     search_fields = ('pet__name', 'tutor__name')
     readonly_fields = ('requested_at', 'confirmed_at', 'cancelled_at')
+
+@admin.register(BusinessUnavailableDay)
+class BusinessUnavailableDayAdmin(admin.ModelAdmin):
+    list_display = ('business', 'date', 'type', 'reason')
+    list_filter = ('business', 'date', 'type')
+    search_fields = ('business__name', 'reason', 'notes')
+    ordering = ('-date',)

@@ -1,0 +1,224 @@
+================================================================================
+                    TAILS PET DAYCARE - TEST ACCOUNTS
+                              v2.1 - 2026-01-04
+================================================================================
+
+🔐 ADMIN / SERVICE OWNER (Highest Privilege)
+================================================================================
+Username: admin
+Email: admin@somemail.com
+Password: SecurePass123!
+URL: http://localhost:8000/admin/
+Role: Service Owner - Full system access
+Access:
+  - Manage ALL businesses
+  - Create/delete businesses and assign credentials
+  - Manage staff, tutors, pets across all businesses
+  - System configuration and settings
+  - Full database access
+
+
+👨‍💼 BUSINESS MANAGERS (Second Highest Privilege)
+================================================================================
+
+TAILS DAYCARE - Manager
+  Email: staff1_manager@somemail.com
+  Password: SecurePass123!
+  Dashboard: http://localhost:8000/staff/dashboard/
+  Role: Manager
+  Access:
+    ✅ All pets and tutors for Tails Daycare
+    ✅ Staff management (add/remove staff, assign roles)
+    ✅ Payment and billing management
+    ✅ Check-ins, reservations, pet sheets
+    ✅ Woof social network (full access)
+    ❌ Cannot access other businesses
+
+PAWS & LOVE - Manager
+  Email: staff3_manager@somemail.com
+  Password: SecurePass123!
+  Dashboard: http://localhost:8000/staff/dashboard/
+  Role: Manager
+  Access:
+    ✅ All pets and tutors for Paws & Love
+    ✅ Staff management (add/remove staff, assign roles)
+    ✅ Payment and billing management
+    ✅ Check-ins, reservations, pet sheets
+    ✅ Woof social network (full access)
+    ❌ Cannot access other businesses
+
+
+👔 BUSINESS STAFF (Third Privilege Level)
+================================================================================
+
+TAILS DAYCARE - Staff
+  Email: staff2_staff@somemail.com
+  Password: SecurePass123!
+  Dashboard: http://localhost:8000/staff/dashboard/
+  Role: Staff
+  Access:
+    ✅ All pets and tutors for Tails Daycare
+    ✅ Check-ins, reservations, pet sheets
+    ✅ Woof social network (read/post)
+    ❌ Cannot manage staff
+    ❌ Cannot access payments/billing
+    ❌ Cannot access other businesses
+
+PAWS & LOVE - Staff
+  Email: staff4_staff@somemail.com
+  Password: SecurePass123!
+  Dashboard: http://localhost:8000/staff/dashboard/
+  Role: Staff
+  Access:
+    ✅ All pets and tutors for Paws & Love
+    ✅ Check-ins, reservations, pet sheets
+    ✅ Woof social network (read/post)
+    ❌ Cannot manage staff
+    ❌ Cannot access payments/billing
+    ❌ Cannot access other businesses
+
+
+👨‍👩‍👧‍👦 TUTORS / PET PARENTS (Lowest Privilege Level)
+================================================================================
+
+Tails Daycare Tutors (tutor1-5):
+  @somemail.com  / SecurePass123!  (2 pets)
+  tutor2@somemail.com  / SecurePass123!  (2 pets)
+  tutor3@somemail.com  / SecurePass123!  (1 pet)
+  tutor4@somemail.com  / SecurePass123!  (2 pets)
+  tutor5@somemail.com  / SecurePass123!  (1 pet)
+
+Paws & Love Tutors (tutor6-10):
+  tutor6@somemail.com  / SecurePass123!  (1 pet)
+  tutor7@somemail.com  / SecurePass123!  (2 pets)
+  tutor8@somemail.com  / SecurePass123!  (1 pet)
+  tutor9@somemaitutor1l.com  / SecurePass123!  (2 pets)
+  tutor10@somemail.com / SecurePass123!  (1 pet)
+
+Dashboard URL: http://localhost:8000/tutor/dashboard/
+Access:
+  ✅ View their own pets only
+  ✅ Manage their pets' reservations
+  ✅ View Woof posts for their pets
+  ✅ Post woofs for their pets
+  ✅ View/update pet information
+  ❌ Cannot see other tutors' pets
+  ❌ Cannot access staff features
+  ❌ Cannot access other businesses
+
+
+📊 PRIVILEGE HIERARCHY
+================================================================================
+
+Level 1: ADMIN (joao)
+  └─ Full system access, manages all businesses
+
+Level 2: MANAGER (staff1_manager, staff3_manager)
+  └─ Full business access, staff management, payments
+
+Level 3: STAFF (staff2_staff, staff4_staff)
+  └─ Daycare operations only, no staff/payment management
+
+Level 4: TUTOR (tutor1-10)
+  └─ Personal pets only, limited dashboard access
+
+
+📚 QUICK REFERENCE
+================================================================================
+
+Total Users: 15
+  - 1 Admin (service owner)
+  - 2 Managers (business managers)
+  - 2 Staff (business staff)
+  - 10 Tutors (pet parents)
+
+Total Businesses: 2
+Total Pets: 15
+
+Average Pets per Tutor: 1.5
+
+
+🧪 TESTING FLOWS
+================================================================================
+
+1. SIGN IN AS ADMIN (Service Owner)
+   - Go to http://localhost:8000/
+   - Click "Sign In"
+   - Enter: admin / SecurePass123!
+   - Expected: Redirected to Django admin panel (/admin/)
+   - Can: Manage all businesses, create new businesses, assign credentials
+
+2. SIGN IN AS MANAGER (Tails Daycare)
+   - Go to http://localhost:8000/
+   - Click "Sign In"
+   - Enter: staff1_manager@somemail.com / SecurePass123!
+   - Expected: Redirected to staff dashboard
+   - Can: See staff management menu, payment options, full business access
+   - Cannot: Access Paws & Love data
+
+3. SIGN IN AS STAFF (Regular Staff)
+   - Go to http://localhost:8000/
+   - Click "Sign In"  
+   - Enter: staff2_staff@somemail.com / SecurePass123!
+   - Expected: Redirected to staff dashboard
+   - Can: Check-ins, reservations, woofs
+   - Cannot: See staff management, see payment options, access other businesses
+
+4. SIGN IN AS TUTOR (Pet Parent)
+   - Go to http://localhost:8000/
+   - Click "Sign In"
+   - Enter: tutor1@somemail.com / SecurePass123!
+   - Expected: Redirected to tutor dashboard
+   - Can: See only their pets, manage their reservations, post woofs
+   - Cannot: See other pets, access staff features
+
+5. VERIFY BUSINESS ISOLATION
+   - Login as staff1_manager@somemail.com (Tails Daycare)
+   - Should see only Tails Daycare: tutors 1-5 and their pets
+   - Should NOT see Paws & Love data
+   
+   - Logout and login as staff3_manager@somemail.com (Paws & Love)
+   - Should see only Paws & Love: tutors 6-10 and their pets
+   - Should NOT see Tails Daycare data
+
+6. VERIFY ROLE PERMISSIONS
+   - Login as staff1_manager@somemail.com (Manager)
+   - Should see "Staff Management" and "Payments" options
+   
+   - Logout and login as staff2_staff@somemail.com (Staff)
+   - Should NOT see "Staff Management" or "Payments" options
+
+
+💡 NOTES
+================================================================================
+
+- All passwords are: SecurePass123!
+- All accounts are pre-verified and ready to use (no email confirmation needed)
+- Admin 'joao' has full system access across ALL businesses
+- Managers can manage staff and payments for their business only
+- Regular staff can do check-ins/reservations but NOT staff/payment management
+- Tutors can only see and manage their own pets
+- All staff (managers + staff) are scoped to their assigned business only
+- To reset a password: python manage.py changepassword <username>
+- To add more test data: python manage.py seed_db
+
+
+🔗 IMPORTANT URLS
+================================================================================
+
+Home:                 http://localhost:8000/
+Sign In:              http://localhost:8000/accounts/login/
+Sign Up (invite):     http://localhost:8000/accounts/signup/
+Password Reset:       http://localhost:8000/accounts/password/reset/
+Admin Panel:          http://localhost:8000/admin/
+Staff Dashboard:      http://localhost:8000/staff/dashboard/
+Tutor Dashboard:      http://localhost:8000/tutor/dashboard/
+Invitations:          http://localhost:8000/admin/home/invitation/
+
+
+================================================================================
+Last Updated: 2026-01-04
+Database: SQLite (db.sqlite3)
+Architecture: 4-tier privilege system with business isolation
+Role Hierarchy: Admin → Manager → Staff → Tutor
+================================================================================

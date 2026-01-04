@@ -66,6 +66,7 @@ class Service(models.Model):
 
 class ServiceSlot(models.Model):
     """Available time slots for services that can be booked"""
+    business = models.ForeignKey('pets.Business', on_delete=models.CASCADE, related_name='service_slots', null=True, blank=True)
     service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='slots')
     date = models.DateField()
     start_time = models.TimeField()
@@ -77,7 +78,7 @@ class ServiceSlot(models.Model):
     
     class Meta:
         ordering = ['date', 'start_time']
-        unique_together = ('service', 'date', 'start_time')
+        unique_together = ('business', 'service', 'date', 'start_time')
     
     def __str__(self):
         return f"{self.service.type.title()} - {self.date} {self.start_time}"
@@ -184,3 +185,28 @@ class TutorSchedule(models.Model):
     
     def __str__(self):
         return f"{self.pet.name} - {self.type.title()} on {self.date}"
+
+
+class BusinessUnavailableDay(models.Model):
+    """Mark days when a business is closed, has holidays, or half-shifts"""
+    UNAVAILABILITY_TYPES = [
+        ('closed', 'Fully Closed'),
+        ('half_day', 'Half Day (Reduced Hours)'),
+        ('holiday', 'Holiday'),
+        ('strike', 'Strike'),
+        ('special', 'Special Event'),
+    ]
+    
+    business = models.ForeignKey('pets.Business', on_delete=models.CASCADE, related_name='unavailable_days')
+    date = models.DateField()
+    type = models.CharField(max_length=20, choices=UNAVAILABILITY_TYPES, default='closed')
+    reason = models.CharField(max_length=200, blank=True, help_text="e.g., 'Christmas', 'Staff training', 'Emergency closure'")
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['date']
+        unique_together = ('business', 'date')
+    
+    def __str__(self):
+        return f"{self.business.name} - {self.date} ({self.get_type_display()})"

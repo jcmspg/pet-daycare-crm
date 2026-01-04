@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Pet Parents - PawCentral</title>
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --secondary: #FF6B6B;
+            --dark: #2C3E50;
+            --light: #ECF0F1;
+            --gray: #95A5A6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: #f8f9fa;
+        }
+
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .back-link {
+            color: var(--dark);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(44,62,80,0.12);
+            background: white;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+            border-color: rgba(78,205,196,0.35);
+            box-shadow: 0 12px 28px rgba(78,205,196,0.18);
+            transform: translateY(-1px);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.78) 0%, rgba(69, 184, 174, 0.78) 100%),
+                        url('https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=1600&q=80') center/cover;
+            color: white;
+            padding: 100px 20px;
+            text-align: center;
+            position: relative;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.08);
+            z-index: 0;
+        }
+
+        .hero > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            opacity: 0.98;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-outline:hover {
+            background: white;
+            color: var(--primary);
+        }
+
+        .features-section {
+            padding: 80px 20px;
+            background: white;
+        }
+
+        .features-section h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+            color: var(--dark);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 40px 30px;
+            border-radius: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(78, 205, 196, 0.1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(78, 205, 196, 0.15);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .feature-card p {
+            color: var(--gray);
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+
+        .share-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .share-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+
+        .share-section p {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-bottom: 40px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .share-btn-email {
+            background: #EA4335;
+            color: white;
+        }
+
+        .share-btn-email:hover {
+            background: #d33426;
+            transform: translateY(-2px);
+        }
+
+        .share-btn-copy {
+            background: var(--primary);
+            color: white;
+        }
+
+        .share-btn-copy:hover {
+            background: #45b8ae;
+            transform: translateY(-2px);
+        }
+
+        .copy-notification {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--dark);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s;
+        }
+
+        .copy-notification.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .cta-buttons,
+            .share-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="{% url 'home:index' %}" class="logo">🐾 PawCentral</a>
+                <a href="{% url 'home:index' %}" class="back-link">← Back to Home</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>🐾 Cute updates without the chaos</h1>
+            <p>Follow your pup’s day with photo drops, real-time check-ins, and one-tap booking. Everything you want, none of the hassle.</p>
+            <div class="cta-buttons">
+                <a href="{% url 'home:tutor_entry' %}" class="btn btn-primary">Access Portal</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="features-section">
+        <div class="container">
+            <h2>What you'll love about PawCentral</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📸</div>
+                    <h3>Daily Photo Updates</h3>
+                    <p>See what your pet is up to with photos and updates from their daycare staff throughout the day.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Easy Booking</h3>
+                    <p>Schedule daycare, grooming, training, and walks with just a few taps from any device.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>Direct Communication</h3>
+                    <p>Chat with staff, view notes, and get instant notifications about your pet's activities.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Health Tracking</h3>
+                    <p>Monitor training progress, health records, and important milestones all in one place.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure & Private</h3>
+                    <p>Your pet's information is protected with enterprise-grade security and EU GDPR compliance.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⏰</div>
+                    <h3>Real-Time Alerts</h3>
+                    <p>Get notified when your pet is checked in, out, or when there are important updates.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="share-section">
+        <div class="container">
+            <h2>📢 Love What You See?</h2>
+            <p>Share PawCentral with your daycare so they can keep you looped in with photos, updates, and stress-free booking.</p>
+            <div class="share-buttons">
+                <a href="mailto:?subject=Check out PawCentral for daycare updates&body=Hi! I found PawCentral and it's awesome for getting daily photos and smooth booking. Here’s the link: {{ request.build_absolute_uri }}{% url 'home:for_businesses' %}%0A%0AWould love if you used it so I can stay more connected!" class="share-btn share-btn-email">
+                    📧 Share via Email
+                </a>
+                <button onclick="copyToClipboard()" class="share-btn share-btn-copy">
+                    📋 Copy Link
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <div id="copy-notification" class="copy-notification">
+        ✓ Link copied to clipboard!
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 PawCentral. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function copyToClipboard() {
+            const businessUrl = window.location.origin + "{% url 'home:for_businesses' %}";
+            navigator.clipboard.writeText(businessUrl).then(() => {
+                const notification = document.getElementById('copy-notification');
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }).catch(err => {
+                alert('Failed to copy link: ' + err);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{% extends "account/base_auth.html" %}
+{% load i18n account %}
+{% block title %}Create Account - Tails{% endblock %}
+{% block content %}
+<h1>Create your account</h1>
+<p class="subtitle">Use your work email if you are staff, or your personal email if you are a pet parent.</p>
+<form method="post" action="{% url 'account_signup' %}">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <label for="id_email">Email</label>
+    {{ form.email }}
+    <label for="id_password1">Password</label>
+    {{ form.password1 }}
+    <label for="id_password2">Confirm Password</label>
+    {{ form.password2 }}
+    <button type="submit">Create Account</button>
+</form>
+<div class="link">
+    <p>Already have an account? <a href="{% url 'account_login' %}">Sign in</a></p>
+</div>
+{% endblock %}

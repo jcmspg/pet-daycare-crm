@@ -1,0 +1,25 @@
+{% extends "account/base_auth.html" %}
+{% load i18n account %}
+{% block title %}Sign In - Tails{% endblock %}
+{% block content %}
+<h1>Welcome back</h1>
+<p class="subtitle">Sign in with your email and password.</p>
+<form method="post" action="{% url 'account_login' %}">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <label for="id_login">Email</label>
+    {{ form.login }}
+    <label for="id_password">Password</label>
+    {{ form.password }}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+        <label style="display:flex;align-items:center;gap:6px;">
+            {{ form.remember }} Remember me
+        </label>
+        <a href="{% url 'account_reset_password' %}">Forgot password?</a>
+    </div>
+    <button type="submit">Sign In</button>
+</form>
+<div class="link">
+    <p>Need an account? <a href="{% url 'account_signup' %}">Create one</a></p>
+</div>
+{% endblock %}

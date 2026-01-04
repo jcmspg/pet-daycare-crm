@@ -516,6 +516,26 @@
         border-color: var(--secondary);
       }
 
+      .time-slot-btn:disabled,
+      .time-slot-btn[disabled] {
+        background: #f5f5f5;
+        color: #999;
+        border-color: #ddd;
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      .time-slot-btn:disabled:hover,
+      .time-slot-btn[disabled]:hover {
+        background: #f5f5f5;
+        border-color: #ddd;
+      }
+
+      .time-slot-option input[type="checkbox"]:disabled + label {
+        color: #999;
+        cursor: not-allowed;
+      }
+
       .booking-form-container {
         display: none;
         background: #f9f9f9;
@@ -611,8 +631,8 @@
       <div class="header-nav">
         <button class="header-btn" onclick="switchTab(event, 'feed-tab')">📰 Feed</button>
         <button class="header-btn" onclick="switchTab(event, 'schedule-tab')">📅 Schedule</button>
-        <a href="/tutor/profile/?phone={{ tutor.phone }}" class="header-btn">👤 My Profile</a>
-        <a href="/tutor/logout" class="header-btn" style="background: #FF6B6B; color: white;">🚪 Logout</a>
+        <a href="{% url 'tutor:profile' %}" class="header-btn">👤 My Profile</a>
+        <a href="{% url 'account_logout' %}" class="header-btn" style="background: #FF6B6B; color: white;">🚪 Logout</a>
       </div>
     </header>
 
@@ -763,41 +783,57 @@
 
       <!-- SCHEDULE TAB -->
       <div id="schedule-tab" class="tab-content">
-        <h2 style="font-size: 24px; margin-bottom: 20px; color: var(--dark);">📅 Book Services for Your Pets</h2>
+        <h2 style="font-size: 24px; margin-bottom: 30px; color: var(--dark);">📅 Book Services for Your Pets</h2>
+        
+        <!-- STEP 1: PET SELECTION -->
+        <div class="booking-step" style="margin-bottom: 30px;">
+          <label style="display: block; margin-bottom: 12px; font-weight: 600; font-size: 16px; color: var(--dark);">1️⃣ Choose a Pet</label>
+          <select id="selected-pet" onchange="onPetSelected()" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; cursor: pointer;">
+            <option value="">-- Select your pet --</option>
+            {% for pet in pets %}
+            <option value="{{ pet.id }}">{{ pet.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <!-- STEP 2: SERVICE SELECTION -->
+        <div class="booking-step" style="margin-bottom: 30px; opacity: 0.5; pointer-events: none;" id="service-step">
+          <label style="display: block; margin-bottom: 12px; font-weight: 600; font-size: 16px; color: var(--dark);">2️⃣ Choose a Service</label>
+          <div id="service-buttons" style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <!-- Services will be populated here -->
+          </div>
+        </div>
         
         <!-- CALENDAR MONTH VIEW -->
-        <div class="calendar-section">
-          <div class="calendar-header">
-            <button class="nav-btn" id="prev-month" onclick="previousMonth()">← Previous</button>
-            <h3 id="month-year"></h3>
-            <button class="nav-btn" id="next-month" onclick="nextMonth()">Next →</button>
+        <div class="booking-step" style="opacity: 0.5; pointer-events: none;" id="calendar-step">
+          <label style="display: block; margin-bottom: 12px; font-weight: 600; font-size: 16px; color: var(--dark);">3️⃣ Pick a Date</label>
+          <div class="calendar-section">
+            <div class="calendar-header">
+              <button class="nav-btn" id="prev-month" onclick="previousMonth()">← Previous</button>
+              <h3 id="month-year"></h3>
+              <button class="nav-btn" id="next-month" onclick="nextMonth()">Next →</button>
+            </div>
+            
+            <div class="calendar-weekdays">
+              <div>Sunday</div>
+              <div>Monday</div>
+              <div>Tuesday</div>
+              <div>Wednesday</div>
+              <div>Thursday</div>
+              <div>Friday</div>
+              <div>Saturday</div>
+            </div>
+            
+            <div class="calendar-days" id="calendar-days"></div>
           </div>
-          
-          <div class="calendar-weekdays">
-            <div>Sunday</div>
-            <div>Monday</div>
-            <div>Tuesday</div>
-            <div>Wednesday</div>
-            <div>Thursday</div>
-            <div>Friday</div>
-            <div>Saturday</div>
-          </div>
-          
-          <div class="calendar-days" id="calendar-days"></div>
         </div>
         
         <!-- SLOT PICKER MODAL -->
         <div class="slot-modal" id="slot-modal">
           <div class="modal-content">
             <div class="modal-header">
-              <span>Book Service for <span id="selected-date-display"></span></span>
+              <span>Select Time Slot for <span id="selected-date-display"></span></span>
               <button class="modal-close" onclick="closeSlotModal()">✕</button>
-            </div>
-            
-            <!-- SERVICE TYPE SELECTION -->
-            <div id="service-selection-container">
-              <label style="display: block; margin-bottom: 12px; font-weight: 600; color: var(--dark);">Select Service Type</label>
-              <div class="service-selection" id="service-selection"></div>
             </div>
             
             <!-- TIME SLOTS -->
@@ -810,16 +846,7 @@
                 <input type="hidden" name="action" value="book_service">
                 <input type="hidden" name="selected_slots" id="selected-slots-input">
                 <input type="hidden" name="selected_service_type" id="selected-service-type-input">
-                
-                <div class="form-group">
-                  <label>Select Your Pet</label>
-                  <select name="pet_id" required>
-                    <option value="">-- Choose a pet --</option>
-                    {% for pet in pets %}
-                    <option value="{{ pet.id }}">{{ pet.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
+                <input type="hidden" name="pet_id" id="hidden-pet-id">
                 
                 <div class="form-group">
                   <label>Notes (Optional)</label>
@@ -837,10 +864,83 @@
     <script>
       let currentDate = new Date();
       let selectedDate = null;
+      let selectedPetId = null;
+      let selectedService = null;
       const slotsData = {{ slots_json|safe }};
       const bookingsData = {{ bookings_json|safe }};
-      let selectedServiceType = null;
       let selectedSlots = [];
+
+      // NEW FLOW: Pet → Service → Calendar
+      
+      function onPetSelected() {
+        selectedPetId = document.getElementById('selected-pet').value;
+        
+        if (!selectedPetId) {
+          // Disable service and calendar steps
+          document.getElementById('service-step').style.opacity = '0.5';
+          document.getElementById('service-step').style.pointerEvents = 'none';
+          document.getElementById('calendar-step').style.opacity = '0.5';
+          document.getElementById('calendar-step').style.pointerEvents = 'none';
+          return;
+        }
+        
+        // Enable service step
+        document.getElementById('service-step').style.opacity = '1';
+        document.getElementById('service-step').style.pointerEvents = 'auto';
+        
+        // Populate service buttons
+        const serviceTypes = [...new Set(Object.values(slotsData).flat().map(s => s.service_type))];
+        const serviceButtons = document.getElementById('service-buttons');
+        serviceButtons.innerHTML = '';
+        
+        serviceTypes.forEach(serviceType => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'service-btn';
+          btn.textContent = serviceType.toUpperCase();
+          btn.style.padding = '10px 20px';
+          btn.style.borderRadius = '6px';
+          btn.style.border = '2px solid #ddd';
+          btn.style.backgroundColor = 'white';
+          btn.style.cursor = 'pointer';
+          btn.style.fontSize = '14px';
+          btn.style.fontWeight = '600';
+          btn.style.transition = 'all 0.3s';
+          btn.onclick = (e) => {
+            e.preventDefault();
+            onServiceSelected(serviceType);
+          };
+          serviceButtons.appendChild(btn);
+        });
+        
+        // Disable calendar step until service is selected
+        document.getElementById('calendar-step').style.opacity = '0.5';
+        document.getElementById('calendar-step').style.pointerEvents = 'none';
+      }
+      
+      function onServiceSelected(serviceType) {
+        selectedService = serviceType;
+        
+        // Update button styles
+        document.querySelectorAll('.service-btn').forEach(btn => {
+          if (btn.textContent === serviceType.toUpperCase()) {
+            btn.style.backgroundColor = '#FF6B9D';
+            btn.style.color = 'white';
+            btn.style.borderColor = '#FF6B9D';
+          } else {
+            btn.style.backgroundColor = 'white';
+            btn.style.color = 'black';
+            btn.style.borderColor = '#ddd';
+          }
+        });
+        
+        // Enable calendar step
+        document.getElementById('calendar-step').style.opacity = '1';
+        document.getElementById('calendar-step').style.pointerEvents = 'auto';
+        
+        // Render calendar filtered by service type
+        renderCalendar();
+      }
 
       function switchTab(event, tabName) {
         event.preventDefault();
@@ -915,12 +1015,16 @@
             }
           }
           
-          // Check if date has slots available
-          if (slotsData[dateStr]) {
+          // Check if date has slots available for selected service
+          const dateSlots = (slotsData[dateStr] || []).filter(s => s.service_type === selectedService);
+          
+          if (dateSlots && dateSlots.length > 0) {
             dayCell.style.cursor = 'pointer';
+            dayCell.style.fontWeight = 'bold';
+            dayCell.style.backgroundColor = '#fff3f6';
             dayCell.onclick = () => selectDay(day, dateObj);
           } else {
-            dayCell.style.opacity = '0.5';
+            dayCell.style.opacity = '0.4';
             dayCell.style.cursor = 'default';
           }
           
@@ -940,60 +1044,34 @@
 
       function selectDay(day, dateObj) {
         const dateStr = dateObj.toISOString().split('T')[0];
-        if (!slotsData[dateStr]) {
+        const dateSlots = (slotsData[dateStr] || []).filter(s => s.service_type === selectedService);
+        
+        if (!dateSlots || dateSlots.length === 0) {
           alert('No services available on this date.');
           return;
         }
         
         selectedDate = dateObj;
-        selectedServiceType = null;
         selectedSlots = [];
         
         document.getElementById('selected-date-display').textContent = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        document.getElementById('selected-service-type-input').value = selectedService;
+        document.getElementById('hidden-pet-id').value = selectedPetId;
         
-        // Show service selection
-        selectServiceType = selectServiceTypeFunc;
-        showServiceSelection(dateStr);
+        // Show time slot selection
+        showTimeSlots(dateSlots);
         
         document.getElementById('slot-modal').classList.add('show');
       }
 
-      function showServiceSelection(dateStr) {
-        const slots = slotsData[dateStr] || [];
-        const serviceTypes = [...new Set(slots.map(s => s.service_type))];
-        
-        const container = document.getElementById('service-selection');
-        container.innerHTML = '';
-        
-        serviceTypes.forEach(serviceType => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'service-btn';
-          btn.textContent = serviceType.toUpperCase();
-          btn.onclick = (e) => {
-            e.preventDefault();
-            selectServiceTypeFunc(serviceType, dateStr);
-          };
-          container.appendChild(btn);
-        });
-      }
-
-      function selectServiceTypeFunc(serviceType, dateStr) {
-        selectedServiceType = serviceType;
-        document.getElementById('selected-service-type-input').value = serviceType;
-        
-        // Update UI
-        document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('selected'));
-        event.target.classList.add('selected');
-        
-        const slots = slotsData[dateStr].filter(s => s.service_type === serviceType);
+      function showTimeSlots(dateSlots) {
         const timeSlotsContainer = document.getElementById('time-slots-container');
         timeSlotsContainer.innerHTML = '';
         
-        if (serviceType === 'daycare') {
+        if (selectedService === 'daycare') {
           // Daycare: allow morning and afternoon selection
           const periods = {};
-          slots.forEach(slot => {
+          dateSlots.forEach(slot => {
             const hour = parseInt(slot.start_time.split(':')[0]);
             const period = hour < 12 ? 'morning' : 'afternoon';
             if (!periods[period]) periods[period] = [];
@@ -1006,10 +1084,17 @@
               const checkboxContainer = document.createElement('div');
               checkboxContainer.className = 'time-slot-option';
               
+              // Disable if fully booked
+              if (slot.is_fully_booked) {
+                checkboxContainer.style.opacity = '0.5';
+                checkboxContainer.style.cursor = 'not-allowed';
+              }
+              
               const checkbox = document.createElement('input');
               checkbox.type = 'checkbox';
               checkbox.id = `period-${slot.id}`;
               checkbox.value = slot.id;
+              checkbox.disabled = slot.is_fully_booked;
               checkbox.onchange = (e) => {
                 if (e.target.checked) {
                   selectedSlots.push(slot.id);
@@ -1021,7 +1106,12 @@
               
               const label_elem = document.createElement('label');
               label_elem.htmlFor = `period-${slot.id}`;
-              label_elem.innerHTML = `${label} (${slot.start_time} - ${slot.end_time}) <small style="color: #999;">(${slot.available_spots} spots)</small>`;
+              const spotsText = slot.is_fully_booked ? '<small style="color: #e74c3c; font-weight: bold;">(FULL)</small>' : `<small style="color: #999;">(${slot.available_spots} spots)</small>`;
+              label_elem.innerHTML = `${label} (${slot.start_time} - ${slot.end_time}) ${spotsText}`;
+              if (slot.is_fully_booked) {
+                label_elem.style.color = '#999';
+                label_elem.style.cursor = 'not-allowed';
+              }
               
               checkboxContainer.appendChild(checkbox);
               checkboxContainer.appendChild(label_elem);
@@ -1031,20 +1121,55 @@
         } else {
           // Other services: single selection
           selectedSlots = [];
-          slots.forEach(slot => {
+          dateSlots.forEach(slot => {
             const slotBtn = document.createElement('button');
             slotBtn.type = 'button';
             slotBtn.className = 'time-slot-btn';
-            slotBtn.innerHTML = `${slot.start_time} - ${slot.end_time}<br><small>${slot.available_spots} spots left</small>`;
-            slotBtn.onclick = (e) => {
-              e.preventDefault();
-              selectedSlots = [slot.id];
-              document.getElementById('selected-slots-input').value = JSON.stringify(selectedSlots);
-              
-              // Highlight selected
-              document.querySelectorAll('.time-slot-btn').forEach(btn => btn.classList.remove('selected'));
-              slotBtn.classList.add('selected');
-            };
+            
+            // Check if fully booked
+            const spotsText = slot.is_fully_booked ? 'FULL - No spots available' : `${slot.available_spots} spots left`;
+            slotBtn.innerHTML = `${slot.start_time} - ${slot.end_time}<br><small>${spotsText}</small>`;
+            slotBtn.style.padding = '12px';
+            slotBtn.style.margin = '8px';
+            slotBtn.style.border = '2px solid #ddd';
+            slotBtn.style.borderRadius = '6px';
+            slotBtn.style.transition = 'all 0.3s';
+            
+            if (slot.is_fully_booked) {
+              // Fully booked styling
+              slotBtn.style.backgroundColor = '#f5f5f5';
+              slotBtn.style.color = '#999';
+              slotBtn.style.borderColor = '#ddd';
+              slotBtn.style.cursor = 'not-allowed';
+              slotBtn.disabled = true;
+              slotBtn.onclick = (e) => {
+                e.preventDefault();
+                // Show message that slot is full
+                alert('This time slot is fully booked. Please select another time.');
+              };
+            } else {
+              // Available slot styling
+              slotBtn.style.backgroundColor = 'white';
+              slotBtn.style.cursor = 'pointer';
+              slotBtn.onclick = (e) => {
+                e.preventDefault();
+                selectedSlots = [slot.id];
+                document.getElementById('selected-slots-input').value = JSON.stringify(selectedSlots);
+                
+                // Highlight selected
+                document.querySelectorAll('.time-slot-btn').forEach(btn => {
+                  if (!btn.disabled) {
+                    btn.style.backgroundColor = 'white';
+                    btn.style.color = 'black';
+                    btn.style.borderColor = '#ddd';
+                  }
+                });
+                slotBtn.style.backgroundColor = '#FF6B9D';
+                slotBtn.style.color = 'white';
+                slotBtn.style.borderColor = '#FF6B9D';
+              };
+            }
+            
             timeSlotsContainer.appendChild(slotBtn);
           });
         }
@@ -1056,7 +1181,6 @@
       function closeSlotModal() {
         document.getElementById('slot-modal').classList.remove('show');
         selectedDate = null;
-        selectedServiceType = null;
         selectedSlots = [];
       }
 
@@ -1072,7 +1196,7 @@
 
       // Initialize calendar on page load
       document.addEventListener('DOMContentLoaded', function() {
-        // Calendar will be rendered when tab is opened
+        // Calendar will be rendered when tab is opened or pet/service selected
       });
 
       // Close modal when clicking outside

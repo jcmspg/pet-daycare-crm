@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Dashboard - {{ business.name|default:"Tails Daycare" }}</title>
     {% load static %}
-    {% load custom_filters %}
+    {% load staff_filters %}
     <link rel="icon" href="{% static 'favicon.ico' %}">
     <title>Tails Pets 🐕</title>
     <link rel="stylesheet" href="{% static 'staff/dashboard.css' %}" />
@@ -18,7 +18,7 @@
         <div class="header-nav">
           <a href="{% url 'staff:feed' %}" class="nav-btn">📰 Feed</a>
           <a href="{% url 'staff:dashboard' %}" class="nav-btn">🔄 Refresh</a>
-          <a href="{% url 'staff:logout' %}" class="nav-btn" style="background: #FF6B6B; color: white;">🚪 Logout</a>
+          <a href="{% url 'account_logout' %}" class="nav-btn" style="background: #FF6B6B; color: white;">🚪 Logout</a>
         </div>
       </header>
 

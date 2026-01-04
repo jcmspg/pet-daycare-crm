@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Parent Portal - Tails</title>
+    {% load static %}
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --dark: #2C3E50;
+            --light: #ECF0F1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, #45b8ae 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 60px 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--dark);
+            margin-bottom: 15px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1.05rem;
+        }
+
+        .content {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .content h2 {
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .content p {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            color: #555;
+        }
+
+        .feature-list li:before {
+            content: "✓ ";
+            color: var(--primary);
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            flex-direction: column;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: block;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45b8ae;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(78, 205, 196, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--dark);
+            border: 2px solid var(--dark);
+        }
+
+        .btn-secondary:hover {
+            background: var(--light);
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .back-link a {
+            color: #7f8c8d;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .back-link a:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🐕</div>
+        <h1>Pet Parent Portal</h1>
+        <p class="subtitle">Welcome to the Tails Pet Parent Portal</p>
+
+        <div class="content">
+            <h2>Coming Soon</h2>
+            <p>The pet parent portal is coming soon! Here's what you'll be able to do:</p>
+            <ul class="feature-list">
+                <li>View your pet's daily activities</li>
+                <li>See real-time check-in/check-out updates</li>
+                <li>Browse photos and videos from daycare</li>
+                <li>Manage service bookings</li>
+                <li>Communicate with staff</li>
+                <li>Track training progress</li>
+            </ul>
+        </div>
+
+        <div class="btn-group">
+            <a href="{% url 'account_login' %}" class="btn btn-primary">Sign In</a>
+            <a href="{% url 'home:index' %}" class="btn btn-secondary">Back to Home</a>
+        </div>
+
+        <div class="back-link">
+            <p style="color: #7f8c8d; font-size: 0.95rem;">Access is invitation-only. Check your email for your invite link.</p>
+        </div>
+    </div>
+</body>
+</html>

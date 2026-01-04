@@ -18,12 +18,21 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from home import views as home_views
 
 urlpatterns = [
+    path('', include('home.urls')),
+    path('accounts/', include('allauth.urls')),
     path('admin/', admin.site.urls),
     path('staff/', include('staff.urls')),
     path('tutor/', include('tutor.urls')),
 ]
 
+# Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Error handlers
+handler403 = home_views.permission_denied
+handler404 = home_views.not_found
+handler500 = home_views.server_error

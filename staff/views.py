@@ -11,49 +11,19 @@ from tutor.models import Woof, WoofLog, GlobalWoof
 from django.shortcuts import get_object_or_404
 from pets.models import TrainingProgress
 
-def staff_login(request):
-    if request.method == 'POST':
-        business_code = request.POST.get('business_code', '').strip()
-        
-        if not business_code:
-            return render(request, 'staff/login.html', {
-                'error': 'Please enter a business code.'
-            })
-        
-        # Try to find business by name (case-insensitive)
-        business = Business.objects.filter(name__icontains=business_code).first()
-        
-        if not business:
-            return render(request, 'staff/login.html', {
-                'business_code': business_code,
-                'error': 'Business not found. Please check your code and try again.'
-            })
-        
-        # Store business ID in session
-        request.session['business_id'] = business.id
-        messages.success(request, f'Welcome to {business.name}!')
-        return redirect('staff:dashboard')
-    
-    return render(request, 'staff/login.html')
 
-def staff_logout(request):
-    request.session.flush()
-    messages.success(request, 'You have been logged out successfully.')
-    return redirect('staff:login')
-
-@login_required
 def dashboard(request):
-    # Get business from session
-    business_id = request.session.get('business_id')
+    """Staff dashboard - requires authentication"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to access the staff dashboard.')
+        return redirect('account_login')
     
-    if not business_id:
-        return redirect('staff:login')
-    
-    try:
-        business = Business.objects.get(id=business_id)
-    except Business.DoesNotExist:
-        messages.error(request, 'Business not found. Please log in again.')
-        return redirect('staff:login')
+    # Get staff record from authenticated user
+    if hasattr(request.user, 'staff_profile') and request.user.staff_profile:
+        business = request.user.staff_profile.business
+    else:
+        messages.error(request, 'You are not authorized to access the staff dashboard.')
+        return redirect('home:index')
     
     pets = Pet.objects.filter(business=business)
     pet_checkins = {pet.id: CheckIn.objects.filter(pet=pet).first() for pet in pets}
@@ -181,8 +151,15 @@ def dashboard(request):
         
         pet_bookings_json[pet.id] = pet_bookings_by_date
     
+    # Get staff profile for role-based permissions
+    staff_profile = request.user.staff_profile
+    
     return render(request, 'staff/dashboard_new.html', {
         'business': business,
+        'staff_profile': staff_profile,
+        'is_manager': staff_profile.is_manager,
+        'can_manage_staff': staff_profile.can_manage_staff(),
+        'can_manage_payments': staff_profile.can_manage_payments(),
         'pets': pets,
         'pet_checkins': pet_checkins,
         'in_house_count': in_house_count,
@@ -195,17 +172,17 @@ def dashboard(request):
 
 @login_required
 def feed(request):
-    # Get business from session
-    business_id = request.session.get('business_id')
+    """Staff feed - requires authentication"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to access the staff feed.')
+        return redirect('account_login')
     
-    if not business_id:
-        return redirect('staff:login')
-    
-    try:
-        business = Business.objects.get(id=business_id)
-    except Business.DoesNotExist:
-        messages.error(request, 'Business not found. Please log in again.')
-        return redirect('staff:login')
+    # Get staff record from authenticated user
+    if hasattr(request.user, 'staff_profile') and request.user.staff_profile:
+        business = request.user.staff_profile.business
+    else:
+        messages.error(request, 'You are not authorized to access the staff feed.')
+        return redirect('home:index')
     
     pets = Pet.objects.filter(business=business).order_by('name')
     pet_checkins = {pet.id: CheckIn.objects.filter(pet=pet).first() for pet in pets}
@@ -359,17 +336,17 @@ def feed(request):
 
 @login_required
 def pet_sheet(request, pet_id):
-    # Get business from session
-    business_id = request.session.get('business_id')
+    """Pet sheet view - requires authentication"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to access pet details.')
+        return redirect('account_login')
     
-    if not business_id:
-        return redirect('staff:login')
-    
-    try:
-        business = Business.objects.get(id=business_id)
-    except Business.DoesNotExist:
-        messages.error(request, 'Business not found. Please log in again.')
-        return redirect('staff:login')
+    # Get staff record from authenticated user
+    if hasattr(request.user, 'staff_profile') and request.user.staff_profile:
+        business = request.user.staff_profile.business
+    else:
+        messages.error(request, 'You are not authorized to access pet details.')
+        return redirect('home:index')
     
     pet = get_object_or_404(Pet, id=pet_id, business=business)
     if request.method == 'POST':
