@@ -177,36 +177,72 @@
         }
 
         .feature-card {
+            position: relative;
+            overflow: hidden;
             padding: 40px 30px;
             text-align: center;
             background: #f8f9fa;
             border-radius: 16px;
             transition: all 0.3s ease;
-            border: 1px solid rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+            color: white;
+            isolation: isolate;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.22));
+            z-index: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0.9;
         }
 
         .feature-card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(255, 107, 107, 0.15);
+            box-shadow: 0 15px 35px rgba(255, 107, 107, 0.25);
             border-color: var(--secondary);
+        }
+
+        .feature-card:hover::before {
+            transform: scale(1.04);
+            opacity: 1;
         }
 
         .feature-icon {
             font-size: 3.5rem;
             margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 6px 20px rgba(0,0,0,0.35);
         }
 
         .feature-card h3 {
-            color: var(--secondary);
             margin-bottom: 15px;
             font-size: 1.5rem;
+            position: relative;
+            z-index: 1;
+            color: #fdfdfd;
         }
 
         .feature-card p {
-            color: var(--gray);
             line-height: 1.8;
             font-size: 1.05rem;
+            position: relative;
+            z-index: 1;
+            color: rgba(255,255,255,0.92);
         }
+
+        .biz-card-1 { background: url('/media/woof_attachments/dog1.jpg') center/cover no-repeat; }
+        .biz-card-2 { background: url('/media/woof_attachments/dog2.jpg') center/cover no-repeat; }
+        .biz-card-3 { background: url('/media/woof_attachments/dog3.jpg') center/cover no-repeat; }
+        .biz-card-4 { background: url('/media/woof_attachments/dog4.jpg') center/cover no-repeat; }
+        .biz-card-5 { background: url('/media/woof_attachments/dog5.jpg') center/cover no-repeat; }
+        .biz-card-6 { background: url('/media/woof_attachments/dog2.jpg') center/cover no-repeat; }
+        .biz-card-7 { background: url('/media/woof_attachments/dog3.jpg') center/cover no-repeat; }
+        .biz-card-8 { background: url('/media/woof_attachments/dog4.jpg') center/cover no-repeat; }
+        .biz-card-9 { background: url('/media/woof_attachments/dog1.jpg') center/cover no-repeat; }
 
         .inquiry-section {
             background: linear-gradient(135deg, rgba(248, 249, 250, 0.95) 0%, rgba(233, 236, 239, 0.95) 100%),
@@ -373,47 +409,47 @@
         <div class="container">
             <h2>Why daycares choose PawCentral</h2>
             <div class="features-grid">
-                <div class="feature-card">
+                <div class="feature-card biz-card-1">
                     <div class="feature-icon">⚡</div>
                     <h3>Streamlined Operations</h3>
                     <p>Manage check-ins, bookings, services, and staff scheduling all from one intuitive dashboard.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card biz-card-2">
                     <div class="feature-icon">👥</div>
                     <h3>Multi-Location Support</h3>
                     <p>Perfect for businesses with multiple locations. Each location operates independently with full isolation.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card biz-card-3">
                     <div class="feature-icon">📱</div>
                     <h3>Pet Parent Portal</h3>
                     <p>Give pet parents 24/7 access to photos, updates, and easy online booking - boosting satisfaction.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card biz-card-4">
                     <div class="feature-icon">🔒</div>
                     <h3>Enterprise Security</h3>
                     <p>Bank-level encryption, EU GDPR compliant, with complete data isolation between businesses.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card biz-card-5">
                     <div class="feature-icon">💰</div>
                     <h3>Payment Management</h3>
                     <p>Track services, manage invoices, and handle billing with integrated payment tools.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card biz-card-6">
                     <div class="feature-icon">📊</div>
                     <h3>Insights & Reports</h3>
                     <p>Data-driven insights to understand your business, track growth, and make informed decisions.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card biz-card-7">
                     <div class="feature-icon">🎨</div>
                     <h3>Custom Branding</h3>
                     <p>White-label options to match your business identity and maintain brand consistency.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card biz-card-8">
                     <div class="feature-icon">🤝</div>
                     <h3>Staff Management</h3>
                     <p>Role-based permissions for managers, staff, and tutors with full access control.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card biz-card-9">
                     <div class="feature-icon">📸</div>
                     <h3>Photo & Video Sharing</h3>
                     <p>Built-in social feed to share pet updates, creating engagement and building trust with clients.</p>

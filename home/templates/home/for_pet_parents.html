@@ -177,36 +177,65 @@
         }
 
         .feature-card {
-            background: #f8f9fa;
+            position: relative;
+            overflow: hidden;
             padding: 40px 30px;
             border-radius: 16px;
             text-align: center;
             transition: all 0.3s ease;
             border: 1px solid rgba(78, 205, 196, 0.1);
+            color: white;
+            isolation: isolate;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25));
+            transition: opacity 0.3s ease;
+            z-index: 0;
         }
 
         .feature-card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(78, 205, 196, 0.15);
+            box-shadow: 0 15px 35px rgba(78, 205, 196, 0.25);
             border-color: var(--primary);
+        }
+
+        .feature-card:hover::before {
+            opacity: 0.6;
         }
 
         .feature-icon {
             font-size: 3.5rem;
             margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
         }
 
         .feature-card h3 {
-            color: var(--primary);
             margin-bottom: 15px;
             font-size: 1.5rem;
+            position: relative;
+            z-index: 1;
+            color: #fdfdfd;
         }
 
         .feature-card p {
-            color: var(--gray);
             line-height: 1.8;
             font-size: 1.05rem;
+            position: relative;
+            z-index: 1;
+            color: #f1f5f9;
         }
+
+        .pet-card-1 { background: linear-gradient(135deg, rgba(78,205,196,0.35), rgba(78,205,196,0.1)), url('/media/woof_attachments/dog1.jpg') center/cover no-repeat; }
+        .pet-card-2 { background: linear-gradient(135deg, rgba(255,107,107,0.35), rgba(255,255,255,0.1)), url('/media/woof_attachments/dog2.jpg') center/cover no-repeat; }
+        .pet-card-3 { background: linear-gradient(135deg, rgba(44,62,80,0.4), rgba(255,255,255,0.1)), url('/media/woof_attachments/dog3.jpg') center/cover no-repeat; }
+        .pet-card-4 { background: linear-gradient(135deg, rgba(78,205,196,0.32), rgba(44,62,80,0.2)), url('/media/woof_attachments/dog4.jpg') center/cover no-repeat; }
+        .pet-card-5 { background: linear-gradient(135deg, rgba(44,62,80,0.4), rgba(78,205,196,0.15)), url('/media/woof_attachments/dog5.jpg') center/cover no-repeat; }
+        .pet-card-6 { background: linear-gradient(135deg, rgba(255,107,107,0.32), rgba(78,205,196,0.15)), url('/media/woof_attachments/dog2.jpg') center/cover no-repeat; }
 
         .share-section {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -345,32 +374,32 @@
         <div class="container">
             <h2>What you'll love about PawCentral</h2>
             <div class="features-grid">
-                <div class="feature-card">
+                <div class="feature-card pet-card-1">
                     <div class="feature-icon">📸</div>
                     <h3>Daily Photo Updates</h3>
                     <p>See what your pet is up to with photos and updates from their daycare staff throughout the day.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card pet-card-2">
                     <div class="feature-icon">📱</div>
                     <h3>Easy Booking</h3>
                     <p>Schedule daycare, grooming, training, and walks with just a few taps from any device.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card pet-card-3">
                     <div class="feature-icon">💬</div>
                     <h3>Direct Communication</h3>
                     <p>Chat with staff, view notes, and get instant notifications about your pet's activities.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card pet-card-4">
                     <div class="feature-icon">📊</div>
                     <h3>Health Tracking</h3>
                     <p>Monitor training progress, health records, and important milestones all in one place.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card pet-card-5">
                     <div class="feature-icon">🔒</div>
                     <h3>Secure & Private</h3>
                     <p>Your pet's information is protected with enterprise-grade security and EU GDPR compliance.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card pet-card-6">
                     <div class="feature-icon">⏰</div>
                     <h3>Real-Time Alerts</h3>
                     <p>Get notified when your pet is checked in, out, or when there are important updates.</p>
