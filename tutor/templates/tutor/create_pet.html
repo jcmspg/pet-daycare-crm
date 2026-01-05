@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add a Pet - Tails Daycare</title>
+    {% load static %}
+    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <link rel="stylesheet" href="{% static 'staff/dashboard.css' %}">
+    <style>
+      .form-container {
+        max-width: 700px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      }
+
+      .form-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .form-header h2 {
+        color: var(--dark);
+        margin-bottom: 10px;
+      }
+
+      .form-header p {
+        color: var(--gray);
+        font-size: 14px;
+      }
+
+      .form-section {
+        margin-bottom: 24px;
+      }
+
+      .form-section-title {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 12px;
+        font-size: 15px;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .form-row.full {
+        grid-template-columns: 1fr;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .form-group label {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        padding: 12px 14px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+
+      .photo-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .photo-preview {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        overflow: hidden;
+      }
+
+      .photo-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        flex: 1;
+      }
+
+      .btn-primary {
+        background: var(--secondary);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #45b8ae;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+      }
+
+      .btn-secondary {
+        background: #e0e0e0;
+        color: var(--dark);
+      }
+
+      .btn-secondary:hover {
+        background: #d0d0d0;
+      }
+
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .checkbox-group input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .checkbox-group label {
+        margin: 0;
+        cursor: pointer;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🐾 Add a New Pet</h1>
+        <div class="header-nav">
+          <a href="{% url 'tutor:dashboard' %}" class="nav-btn">← Back to Dashboard</a>
+        </div>
+      </header>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="message {% if message.tags %}{{ message.tags }}{% else %}success{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="form-container">
+        <div class="form-header">
+          <h2>Tell us about your pet!</h2>
+          <p>We'll use this information to provide better care for your furry friend at {{ business.name }}</p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <!-- BASIC INFO -->
+          <div class="form-section">
+            <div class="form-section-title">📋 Basic Information</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="name">Pet Name *</label>
+                <input type="text" id="name" name="name" required placeholder="e.g., Max">
+              </div>
+              <div class="form-group">
+                <label for="species">Species</label>
+                <input type="text" id="species" name="species" placeholder="e.g., Dog, Cat, Rabbit">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="breed">Breed</label>
+                <input type="text" id="breed" name="breed" placeholder="e.g., Golden Retriever">
+              </div>
+              <div class="form-group">
+                <label for="birthday">Birthday</label>
+                <input type="date" id="birthday" name="birthday">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="sex">Sex</label>
+                <select id="sex" name="sex">
+                  <option value="unknown">Not specified</option>
+                  <option value="male">Male 🙂</option>
+                  <option value="female">Female 🙋</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="chip_number">Microchip Number</label>
+                <input type="text" id="chip_number" name="chip_number" placeholder="Optional">
+              </div>
+            </div>
+
+            <div class="form-row full">
+              <div style="display: flex; align-items: flex-end; gap: 16px;">
+                <div style="flex: 1;">
+                  <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); font-size: 14px;">Photo</label>
+                  <input type="file" id="photo" name="photo" accept="image/*" onchange="previewPhoto(event)">
+                </div>
+                <div class="photo-preview" id="photo-preview">
+                  <span style="color: var(--gray); font-size: 32px;">📷</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- HEALTH INFO -->
+          <div class="form-section">
+            <div class="form-section-title">🏥 Health Information</div>
+            
+            <div class="form-row full">
+              <div class="form-group">
+                <label for="allergies">Allergies & Dietary Restrictions</label>
+                <textarea id="allergies" name="allergies" placeholder="e.g., Chicken allergy, grain-free diet required"></textarea>
+              </div>
+            </div>
+
+            <div class="form-row full">
+              <div class="checkbox-group">
+                <input type="checkbox" id="neutered" name="neutered">
+                <label for="neutered">This pet is neutered/spayed ✂️</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- ADDRESS & NOTES -->
+          <div class="form-section">
+            <div class="form-section-title">📍 Additional Information</div>
+            
+            <div class="form-row full">
+              <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" id="address" name="address" placeholder="Where does your pet live?">
+              </div>
+            </div>
+
+            <div class="form-row full">
+              <div class="form-group">
+                <label for="notes">Notes & Special Instructions</label>
+                <textarea id="notes" name="notes" placeholder="e.g., Afraid of thunder, loves long walks, needs medication twice daily..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="form-actions">
+            <a href="{% url 'tutor:dashboard' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">✅ Add Pet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      function previewPhoto(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const preview = document.getElementById('photo-preview');
+            preview.innerHTML = '<img src="' + e.target.result + '" alt="Pet photo">';
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    </script>
+  </body>
+</html>

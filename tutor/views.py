@@ -95,7 +95,7 @@ def tutor_dashboard(request):
         if not message and not attachment:
             messages.error(request, 'Reply cannot be empty.')
             return redirect('tutor:dashboard')
-        Woof.objects.create(
+        reply = Woof.objects.create(
             business=business,
             pet=parent.pet,
             message=message or '',
@@ -103,6 +103,19 @@ def tutor_dashboard(request):
             parent_woof=parent,
             attachment=attachment
         )
+        
+        # NOTIFY STAFF ABOUT REPLY
+        from home.models import Notification
+        if parent.staff:
+            Notification.objects.create(
+                user=parent.staff,
+                notification_type='woof_reply',
+                title=f'💬 {tutor.name} replied about {parent.pet.name}',
+                message=message[:100] + ('...' if len(message) > 100 else ''),
+                content_type='woof',
+                object_id=parent.id,
+            )
+        
         messages.success(request, 'Reply sent!')
         return redirect('tutor:dashboard')
     
@@ -175,13 +188,29 @@ def tutor_dashboard(request):
                         failed_slots.append(f'{slot.start_time} - {slot.end_time}')
                         continue
                     
-                    ServiceBooking.objects.create(
+                    booking = ServiceBooking.objects.create(
                         slot=slot,
                         pet=pet,
                         tutor=tutor,
                         notes=notes,
                         status='pending'
                     )
+                    
+                    # CREATE NOTIFICATION FOR STAFF
+                    from home.models import Notification
+                    from pets.models import Staff
+                    
+                    staff_members = Staff.objects.filter(business=business)
+                    for staff in staff_members:
+                        Notification.objects.create(
+                            user=staff.user,
+                            notification_type='booking_created',
+                            title=f'📅 New Booking Request',
+                            message=f'{tutor.name} booked {pet.name} for {slot.service.get_type_display()} on {slot.date.strftime("%b %d")} at {slot.start_time.strftime("%H:%M")}',
+                            content_type='booking',
+                            object_id=booking.id,
+                        )
+                    
                     booked_count += 1
                 except ServiceSlot.DoesNotExist:
                     failed_slots.append('Unknown slot')
@@ -253,6 +282,28 @@ def tutor_dashboard(request):
     slots_json_str = json.dumps(slots_json)
     bookings_json_str = json.dumps(bookings_by_date_json)
     
+    # Generate per-pet booking data for mini calendars (like staff dashboard)
+    pet_bookings_json = {}
+    for pet in pets:
+        pet_bookings = ServiceBooking.objects.for_pet(pet).filter(
+            status__in=['pending', 'confirmed']
+        ).with_related().order_by('slot__date')
+        
+        pet_bookings_by_date = {}
+        for booking in pet_bookings:
+            date_str = booking.slot.date.isoformat()
+            if date_str not in pet_bookings_by_date:
+                pet_bookings_by_date[date_str] = []
+            
+            pet_bookings_by_date[date_str].append({
+                'id': booking.id,
+                'status': booking.status,
+                'service': booking.slot.service.type,
+                'time': booking.slot.start_time.strftime('%H:%M'),
+            })
+        
+        pet_bookings_json[pet.id] = pet_bookings_by_date
+    
     return render(request, 'tutor/dashboard_new.html', {
         'tutor': tutor,
         'pets': pets,
@@ -265,6 +316,7 @@ def tutor_dashboard(request):
         'bookings_by_slot': bookings_by_slot,
         'slots_json': slots_json_str,
         'bookings_json': bookings_json_str,
+        'pet_bookings_json': json.dumps(pet_bookings_json),
     })
 
 def tutor_profile(request):
@@ -342,7 +394,7 @@ def tutor_pet_sheet(request, pet_id):
                     messages.warning(request, 'Invalid birthday format. Use YYYY-MM-DD.')
             pet.save()
             messages.success(request, 'Pet information updated!')
-        return redirect(f'/tutor/pet/{pet.id}/?phone={phone}')
+        return redirect('tutor:pet_sheet', pet_id=pet.id)
     
     training_entries = pet.training_entries.all()[:20]
     
@@ -351,3 +403,63 @@ def tutor_pet_sheet(request, pet_id):
         'pet': pet,
         'training_entries': training_entries,
     })
+
+
+def create_pet(request):
+    """Create a new pet - tutors only"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in to create a pet.')
+        return redirect('account_login')
+    
+    # Get tutor from authenticated user
+    if hasattr(request.user, 'tutor_profile') and request.user.tutor_profile:
+        tutor = request.user.tutor_profile
+    else:
+        messages.error(request, 'You are not authorized to create a pet.')
+        return redirect('home:index')
+    
+    business = tutor.business
+    
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        
+        if not name:
+            messages.error(request, 'Please enter a pet name.')
+            return render(request, 'tutor/create_pet.html', {'tutor': tutor})
+        
+        # Create pet
+        pet = Pet.objects.create(
+            name=name,
+            business=business,
+            species=request.POST.get('species', ''),
+            breed=request.POST.get('breed', ''),
+            sex=request.POST.get('sex', 'unknown'),
+            neutered=request.POST.get('neutered') == 'on',
+            allergies=request.POST.get('allergies', ''),
+            address=request.POST.get('address', ''),
+            chip_number=request.POST.get('chip_number', ''),
+            notes=request.POST.get('notes', ''),
+        )
+        
+        # Handle photo upload
+        photo = request.FILES.get('photo')
+        if photo:
+            pet.photo = photo
+        
+        # Handle birthday
+        bday = request.POST.get('birthday')
+        if bday:
+            try:
+                pet.birthday = datetime.strptime(bday, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        pet.save()
+        
+        # Add this tutor to the pet's tutors
+        pet.tutors.add(tutor)
+        
+        messages.success(request, f'✅ {pet.name} has been added!')
+        return redirect('tutor:pet_sheet', pet_id=pet.id)
+    
+    return render(request, 'tutor/create_pet.html', {'tutor': tutor})

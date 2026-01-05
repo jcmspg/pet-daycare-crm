@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutor Invitation - {{ invitation.business.name }}</title>
+    {% load static %}
+    <link rel="icon" href="{% static 'favicon.ico' %}">
+    <link rel="stylesheet" href="{% static 'staff/dashboard.css' %}" />
+    <style>
+      .invitation-container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+
+      .invitation-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .invitation-header h2 {
+        color: var(--primary);
+        margin-bottom: 10px;
+      }
+
+      .invitation-header p {
+        color: var(--gray);
+        font-size: 14px;
+      }
+
+      .invitation-details {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 14px;
+      }
+
+      .detail-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .detail-label {
+        color: var(--gray);
+        font-weight: 500;
+      }
+
+      .detail-value {
+        color: var(--dark);
+        font-weight: 600;
+      }
+
+      .link-section {
+        margin-top: 30px;
+      }
+
+      .link-section h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+        color: var(--dark);
+      }
+
+      .link-box {
+        background: #f0f0f0;
+        padding: 16px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .link-text {
+        flex: 1;
+        word-break: break-all;
+        color: var(--dark);
+        font-size: 13px;
+        font-family: monospace;
+      }
+
+      .copy-btn {
+        padding: 8px 16px;
+        background: var(--secondary);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+      }
+
+      .copy-btn:hover {
+        background: #45b8ae;
+        transform: translateY(-1px);
+      }
+
+      .instructions {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 16px;
+        border-radius: 6px;
+        margin-top: 20px;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .instructions h4 {
+        margin-top: 0;
+        color: #856404;
+      }
+
+      .instructions ol {
+        margin: 10px 0 0 20px;
+        padding: 0;
+      }
+
+      .instructions li {
+        margin-bottom: 8px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+        justify-content: center;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #ff5252;
+        transform: translateY(-2px);
+      }
+
+      .btn-secondary {
+        background: #e0e0e0;
+        color: var(--dark);
+      }
+
+      .btn-secondary:hover {
+        background: #d0d0d0;
+      }
+
+      .success-icon {
+        font-size: 48px;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .qr-section {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .qr-section p {
+        color: var(--gray);
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🐕 {{ invitation.business.name }}</h1>
+        <div class="header-nav">
+          <a href="{% url 'staff:dashboard' %}" class="nav-btn">← Back to Dashboard</a>
+        </div>
+      </header>
+
+      <div class="invitation-container">
+        <div class="invitation-header">
+          <div class="success-icon">✅</div>
+          <h2>Invitation Created!</h2>
+          <p>Share this invitation link with the tutor</p>
+        </div>
+
+        <div class="invitation-details">
+          <div class="detail-row">
+            <span class="detail-label">📧 Email:</span>
+            <span class="detail-value">{{ invitation.email }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">👥 Role:</span>
+            <span class="detail-value">{{ invitation.get_role_display }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">🏢 Business:</span>
+            <span class="detail-value">{{ invitation.business.name }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">📅 Created:</span>
+            <span class="detail-value">{{ invitation.created_at|date:"M d, Y H:i" }}</span>
+          </div>
+        </div>
+
+        <div class="link-section">
+          <h3>📎 Invitation Link</h3>
+          <div class="link-box">
+            <div class="link-text" id="invite-link">{{ invite_url }}</div>
+            <button class="copy-btn" onclick="copyToClipboard()">Copy</button>
+          </div>
+        </div>
+
+        <div class="instructions">
+          <h4>📋 How to Share:</h4>
+          <ol>
+            <li>Copy the invitation link above</li>
+            <li>Send it to the tutor via email or message</li>
+            <li>They'll click the link and create their account</li>
+            <li>Once verified, they can start adding their pets</li>
+          </ol>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" onclick="window.print()">🖨️ Print</button>
+          <a href="{% url 'staff:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function copyToClipboard() {
+        const text = document.getElementById('invite-link').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          alert('Invitation link copied to clipboard!');
+        }).catch(() => {
+          // Fallback for older browsers
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          alert('Invitation link copied to clipboard!');
+        });
+      }
+    </script>
+  </body>
+</html>

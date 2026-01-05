@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Business, Tutor, Pet, TrainingProgress
+from .models import Business, Tutor, Pet, TrainingProgress, FooterConfig
 
 class PetPreviewInline(admin.TabularInline):
     model = Pet.tutors.through
@@ -40,6 +40,7 @@ class TutorPreviewInline(admin.TabularInline):
 @admin.register(Business)
 class BusinessAdmin(admin.ModelAdmin):
     list_display = ['name', 'tutors_count', 'pets_count']
+    fields = ['name', 'banner_image']
     inlines = [PetBusinessPreviewInline, TutorPreviewInline]
     
     def tutors_count(self, obj):
@@ -73,3 +74,25 @@ class PetAdmin(admin.ModelAdmin):
     def tutors_list(self, obj):
         return ", ".join([t.name for t in obj.tutors.all()[:3]])
     tutors_list.short_description = 'Tutors'
+
+@admin.register(FooterConfig)
+class FooterConfigAdmin(admin.ModelAdmin):
+    list_display = ['business', 'brand_name', 'updated_at']
+    fieldsets = (
+        ('Business', {
+            'fields': ('business',)
+        }),
+        ('Brand Information', {
+            'fields': ('brand_name', 'tagline')
+        }),
+        ('Contact Information', {
+            'fields': ('email', 'phone', 'hours')
+        }),
+        ('Social Links', {
+            'fields': ('facebook_url', 'instagram_url', 'twitter_url')
+        }),
+        ('Footer Text', {
+            'fields': ('copyright_text',)
+        }),
+    )
+    readonly_fields = ('created_at', 'updated_at')

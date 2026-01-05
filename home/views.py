@@ -124,7 +124,24 @@ def accept_invitation(request, invitation_id):
         invitation.used_by = user
         invitation.save()
         
-        messages.success(request, f'Account created! You can now sign in.')
+        # Create Tutor or Staff profile based on role
+        if invitation.role == 'tutor':
+            from pets.models import Tutor
+            Tutor.objects.create(
+                user=user,
+                email=invitation.email,
+                business=invitation.business
+            )
+            messages.success(request, 'Account created! You can now sign in and add your pets.')
+        elif invitation.role == 'staff':
+            from pets.models import Staff
+            Staff.objects.create(
+                user=user,
+                business=invitation.business,
+                role='staff'
+            )
+            messages.success(request, 'Account created! You can now sign in.')
+        
         return redirect('account_login')
     
     return render(request, 'home/accept_invitation.html', {'invitation': invitation})

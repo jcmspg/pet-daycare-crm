@@ -4,9 +4,42 @@ from .managers import PetManager, TutorManager, StaffManager
 
 class Business(models.Model):
     name = models.CharField(max_length=100)
+    banner_image = models.ImageField(upload_to='business_banners/', null=True, blank=True)
     
     def __str__(self):
         return self.name
+
+
+class FooterConfig(models.Model):
+    """Customizable footer configuration for each business"""
+    business = models.OneToOneField(Business, on_delete=models.CASCADE, related_name='footer_config')
+    
+    # Brand info
+    brand_name = models.CharField(max_length=100, default='PawCentral')
+    tagline = models.CharField(max_length=255, blank=True, default='Trusted pet care service')
+    
+    # Contact info
+    email = models.EmailField(blank=True, default='support@pawcentral.com')
+    phone = models.CharField(max_length=20, blank=True, default='+1 (555) 123-4567')
+    hours = models.CharField(max_length=100, blank=True, default='Mon-Fri 9 AM - 5 PM')
+    
+    # Social links
+    facebook_url = models.URLField(blank=True, default='#')
+    instagram_url = models.URLField(blank=True, default='#')
+    twitter_url = models.URLField(blank=True, default='#')
+    
+    # Footer text
+    copyright_text = models.CharField(max_length=255, blank=True, default='All rights reserved. Built with ❤️ for pet lovers')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Footer Config - {self.business.name}"
+    
+    class Meta:
+        verbose_name = "Footer Configuration"
+        verbose_name_plural = "Footer Configurations"
 
 class Staff(models.Model):
     """Staff members associated with a business"""

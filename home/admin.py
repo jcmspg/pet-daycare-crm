@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Invitation, BusinessInquiry
+from .models import Invitation, BusinessInquiry, Notification
 
 @admin.register(Invitation)
 class InvitationAdmin(admin.ModelAdmin):
@@ -48,3 +48,23 @@ class BusinessInquiryAdmin(admin.ModelAdmin):
             from django.utils import timezone
             obj.contacted_at = timezone.now()
         super().save_model(request, obj, form, change)
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('title', 'user', 'notification_type', 'is_read', 'created_at')
+    list_filter = ('notification_type', 'is_read', 'created_at')
+    search_fields = ('user__username', 'title', 'message')
+    readonly_fields = ('created_at', 'read_at')
+    
+    fieldsets = (
+        ('Notification', {
+            'fields': ('user', 'notification_type', 'title', 'message')
+        }),
+        ('Content Link', {
+            'fields': ('content_type', 'object_id')
+        }),
+        ('Status', {
+            'fields': ('is_read', 'created_at', 'read_at')
+        }),
+    )

@@ -62,6 +62,7 @@ def dashboard(request):
             if created:
                 try:
                     woof = Woof.objects.create(
+                        business=business,
                         pet=pet,
                         message=f"🐕 {pet.name} checked in at {timezone.now().time()}! Happy tail wagging! 🐶",
                         staff=request.user
@@ -87,6 +88,7 @@ def dashboard(request):
             visibility = request.POST.get('visibility', 'public')
             if message:
                 woof = Woof.objects.create(
+                    business=business,
                     pet=pet,
                     message=message,
                     staff=request.user,
@@ -99,12 +101,40 @@ def dashboard(request):
                     user=request.user,
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
+                
+                # NOTIFY TUTORS ABOUT NEW WOOF
+                from home.models import Notification
+                tutors = pet.tutors.all()
+                for tutor in tutors:
+                    Notification.objects.create(
+                        user=tutor.user,
+                        notification_type='woof_created',
+                        title=f'💬 New message about {pet.name}',
+                        message=message[:100] + ('...' if len(message) > 100 else ''),
+                        content_type='woof',
+                        object_id=woof.id,
+                    )
+                
                 messages.success(request, f'Woof added for {pet.name}!')
         elif action == 'global_woof':
             message = request.POST.get('global_message', '').strip()
             attachment = request.FILES.get('global_attachment')
             if message or attachment:
-                GlobalWoof.objects.create(message=message, staff=request.user, attachment=attachment)
+                GlobalWoof.objects.create(message=message, staff=request.user, attachment=attachment, business=business)
+                
+                # NOTIFY ALL TUTORS IN BUSINESS
+                from home.models import Notification
+                from pets.models import Tutor
+                tutors = Tutor.objects.filter(business=business)
+                for tutor in tutors:
+                    Notification.objects.create(
+                        user=tutor.user,
+                        notification_type='woof_created',
+                        title=f'📢 Message from {business.name}',
+                        message=message[:100] + ('...' if len(message) > 100 else ''),
+                        content_type='woof',
+                    )
+                
                 messages.success(request, 'Global woof sent to all tutors!')
         elif action == 'confirm_booking':
             booking_id = request.POST.get('booking_id')
@@ -194,9 +224,9 @@ def feed(request):
     pets = Pet.objects.for_business(business).order_by('name')
     pet_checkins = {pet.id: CheckIn.objects.filter(pet=pet).first() for pet in pets}
 
-    # Unified feed: pet woofs (all, top-level) + global woofs
-    pet_woofs = Woof.objects.filter(parent_woof__isnull=True).select_related('pet', 'staff').order_by('-created_at')
-    global_woofs = GlobalWoof.objects.select_related('staff').order_by('-created_at')
+    # Unified feed: pet woofs (all, top-level) + global woofs (business-scoped)
+    pet_woofs = Woof.objects.filter(business=business, parent_woof__isnull=True).select_related('pet', 'staff').order_by('-created_at')
+    global_woofs = GlobalWoof.objects.filter(business=business).select_related('staff').order_by('-created_at')
 
     # Normalize to unified list with label and type for rendering
     feed_items = []
@@ -289,6 +319,7 @@ def feed(request):
             visibility = request.POST.get('visibility', 'private')
             if message or attachment:
                 woof = Woof.objects.create(
+                    business=business,
                     pet=pet,
                     message=message,
                     staff=request.user,
@@ -321,6 +352,7 @@ def feed(request):
                 messages.error(request, 'Reply cannot be empty.')
                 return redirect('staff:feed')
             Woof.objects.create(
+                business=business,
                 pet=parent.pet,
                 message=message or '',
                 staff=request.user,
@@ -406,3 +438,120 @@ def pet_sheet(request, pet_id):
         'pet': pet,
         'training_entries': training_entries,
     })
+
+
+def create_tutor_invitation(request):
+    """Create an invitation for a new tutor - managers only"""
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in.')
+        return redirect('account_login')
+    
+    # Get staff record
+    if not hasattr(request.user, 'staff_profile') or not request.user.staff_profile:
+        messages.error(request, 'You are not authorized to access this feature.')
+        return redirect('home:index')
+    
+    staff = request.user.staff_profile
+    business = staff.business
+    
+    # Check if user is manager
+    if not staff.can_manage_staff():
+        messages.error(request, 'Only managers can create tutor invitations.')
+        return redirect('staff:dashboard')
+    
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        
+        if not email:
+            messages.error(request, 'Please enter an email address.')
+            return redirect('staff:dashboard')
+        
+        # Check if invitation already exists
+        from home.models import Invitation
+        existing = Invitation.objects.filter(business=business, email=email, role='tutor').first()
+        
+        if existing:
+            if existing.is_valid:
+                messages.warning(request, 'An active invitation already exists for this email.')
+                # Return the existing invitation link
+                return redirect('staff:show_invitation', invitation_id=existing.id)
+            else:
+                # Delete used invitation and create new one
+                existing.delete()
+        
+        # Create new invitation
+        invitation = Invitation.objects.create(
+            business=business,
+            email=email,
+            role='tutor'
+        )
+        
+        messages.success(request, f'Invitation created for {email}!')
+        return redirect('staff:show_invitation', invitation_id=invitation.id)
+    
+    return redirect('staff:dashboard')
+
+
+def show_invitation(request, invitation_id):
+    """Display invitation link to manager"""
+    from home.models import Invitation
+    
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please log in.')
+        return redirect('account_login')
+    
+    # Get staff record
+    if not hasattr(request.user, 'staff_profile') or not request.user.staff_profile:
+        messages.error(request, 'You are not authorized to access this feature.')
+        return redirect('home:index')
+    
+    staff = request.user.staff_profile
+    
+    # Get invitation
+    invitation = get_object_or_404(Invitation, id=invitation_id, business=staff.business, role='tutor')
+    
+    # Generate full invite URL
+    from django.urls import reverse
+    invite_url = request.build_absolute_uri(reverse('home:accept_invitation', args=[invitation.id]))
+    
+    return render(request, 'staff/invitation_link.html', {
+        'invitation': invitation,
+        'invite_url': invite_url,
+    })
+
+@login_required
+def upload_banner(request):
+    """Upload banner image for business"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Not authenticated'}, status=401)
+    
+    if not hasattr(request.user, 'staff_profile') or not request.user.staff_profile:
+        return JsonResponse({'error': 'Not authorized'}, status=403)
+    
+    business = request.user.staff_profile.business
+    
+    if request.method == 'POST':
+        if 'banner_image' not in request.FILES:
+            return JsonResponse({'error': 'No image provided'}, status=400)
+        
+        image_file = request.FILES['banner_image']
+        
+        # Validate file type
+        if not image_file.content_type.startswith('image/'):
+            return JsonResponse({'error': 'File must be an image'}, status=400)
+        
+        # Validate file size (max 5MB)
+        if image_file.size > 5 * 1024 * 1024:
+            return JsonResponse({'error': 'Image too large (max 5MB)'}, status=400)
+        
+        # Save the image
+        business.banner_image = image_file
+        business.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Banner image updated successfully',
+            'image_url': business.banner_image.url
+        })
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

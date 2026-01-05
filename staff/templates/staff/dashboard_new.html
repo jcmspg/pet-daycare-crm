@@ -13,13 +13,15 @@
   <body>
     <div class="container">
       <!-- HEADER -->
-      <header>
+      <header{% if business.banner_image %} style="background-image: url('{{ business.banner_image.url }}');"{% else %} style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 100%22><rect fill=%22%234ECDC4%22 width=%22200%22 height=%22100%22/><circle cx=%2250%22 cy=%2240%22 r=%2215%22 fill=%22%23fff%22/><circle cx=%2260%22 cy=%2235%22 r=%228%22 fill=%22%23333%22/><circle cx=%22100%22 cy=%2250%22 r=%2220%22 fill=%22%23fff%22/><circle cx=%22110%22 cy=%2245%22 r=%2210%22 fill=%22%23333%22/><ellipse cx=%2275%22 cy=%2270%22 rx=%2220%22 ry=%2215%22 fill=%22%23f4a460%22/><path d=%22M 50 55 Q 55 65 60 55%22 stroke=%22%23333%22 stroke-width=%222%22 fill=%22none%22/><path d=%22M 95 70 Q 100 80 105 70%22 stroke=%22%23333%22 stroke-width=%222%22 fill=%22none%22/></svg>');"%{% endif %}>
         <h1>🐕 {{ business.name|default:"Tails Daycare" }}</h1>
         <div class="header-nav">
           <a href="{% url 'staff:feed' %}" class="nav-btn">📰 Feed</a>
           <a href="{% url 'staff:dashboard' %}" class="nav-btn">🔄 Refresh</a>
+          <button class="nav-btn" onclick="document.getElementById('banner-upload').click()" title="Upload banner image">🖼️ Banner</button>
           <a href="{% url 'account_logout' %}" class="nav-btn" style="background: #FF6B6B; color: white;">🚪 Logout</a>
         </div>
+        <input type="file" id="banner-upload" accept="image/*" style="display:none;" onchange="uploadBanner(event)">
       </header>
 
       <!-- MESSAGES -->
@@ -29,6 +31,35 @@
             {{ message }}
           </div>
         {% endfor %}
+      {% endif %}
+
+      <!-- MANAGER SECTION: CREATE TUTOR INVITATIONS -->
+      {% if request.user.staff_profile.is_manager %}
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px; border-radius: 12px; margin-bottom: 30px; color: white;">
+        <h2 style="margin-top: 0; color: white;">👥 Invite New Tutors</h2>
+        <p style="margin-bottom: 16px; opacity: 0.9;">Create an invitation link to invite pet parents to join your business</p>
+        <form method="post" action="{% url 'staff:create_invitation' %}" style="display: flex; gap: 12px; align-items: flex-end;">
+          {% csrf_token %}
+          <div style="flex: 1;">
+            <input 
+              type="email" 
+              name="email" 
+              placeholder="Enter tutor email address" 
+              required
+              style="width: 100%; padding: 12px 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; background: rgba(255,255,255,0.1); color: white; font-size: 14px;"
+            >
+            <style>
+              input[placeholder]::-webkit-input-placeholder { color: rgba(255,255,255,0.7); }
+              input[placeholder]:-moz-placeholder { color: rgba(255,255,255,0.7); }
+              input[placeholder]::-moz-placeholder { color: rgba(255,255,255,0.7); }
+              input[placeholder]:-ms-input-placeholder { color: rgba(255,255,255,0.7); }
+            </style>
+          </div>
+          <button type="submit" style="padding: 12px 24px; background: white; color: #667eea; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+            + Create Invite
+          </button>
+        </form>
+      </div>
       {% endif %}
 
       <!-- STATS GRID -->
@@ -243,6 +274,60 @@
     </div>
 
     <script>
+      // Banner Upload Handler
+      function uploadBanner(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('banner_image', file);
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+        console.log('CSRF Token:', csrfToken);
+        console.log('File:', file.name, file.size, file.type);
+
+        // Show loading state
+        const btn = event.target.parentElement.querySelector('.nav-btn:nth-child(3)');
+        const originalText = btn.textContent;
+        btn.textContent = '⏳ Uploading...';
+        btn.disabled = true;
+
+        fetch('{% url "staff:upload_banner" %}', {
+          method: 'POST',
+          body: formData,
+          headers: csrfToken ? {
+            'X-CSRFToken': csrfToken
+          } : {}
+        })
+        .then(response => {
+          console.log('Response status:', response.status);
+          return response.json();
+        })
+        .then(data => {
+          console.log('Upload response:', data);
+          if (data.success) {
+            alert('Banner updated successfully! Reloading...');
+            // Reload to show new banner
+            setTimeout(() => location.reload(), 500);
+          } else {
+            alert('Error: ' + (data.error || 'Upload failed'));
+            console.error('Upload error:', data);
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }
+        })
+        .catch(err => {
+          alert('Error uploading banner: ' + err);
+          console.error('Upload error:', err);
+          btn.textContent = originalText;
+          btn.disabled = false;
+        });
+
+        // Reset input
+        event.target.value = '';
+      }
+
       // Mini Calendar Generator for Each Pet
       const today = new Date();
       
@@ -295,6 +380,10 @@
             const hasConfirmed = bookings.some(b => b.status === 'confirmed');
             const hasPending = bookings.some(b => b.status === 'pending');
             
+            // Show service types
+            const services = bookings.map(b => `${b.service} (${b.time})`).join(', ');
+            dayCell.title = services;
+            
             dayCell.classList.add('has-booking');
             if (hasConfirmed) {
               dayCell.classList.add('confirmed');
@@ -319,5 +408,6 @@
         location.reload();
       }, 30000);
     </script>
+    {% include 'footer.html' %}
   </body>
 </html>
