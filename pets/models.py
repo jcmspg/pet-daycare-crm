@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from .managers import PetManager, TutorManager, StaffManager
 
 class Business(models.Model):
     name = models.CharField(max_length=100)
@@ -17,6 +18,8 @@ class Staff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='staff_profile')
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='staff_members')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='staff')
+    
+    objects = StaffManager()
     
     class Meta:
         unique_together = ('user', 'business')
@@ -46,6 +49,8 @@ class Tutor(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='tutors')
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='tutor_profile')
     
+    objects = TutorManager()
+    
     def __str__(self):
         return self.name
 
@@ -69,6 +74,8 @@ class Pet(models.Model):
     allergies = models.TextField(blank=True)
     address = models.CharField(max_length=255, blank=True)
     chip_number = models.CharField(max_length=64, blank=True)
+    
+    objects = PetManager()
 
 class TrainingProgress(models.Model):
     pet = models.ForeignKey(Pet, on_delete=models.CASCADE, related_name='training_entries')
@@ -82,6 +89,3 @@ class TrainingProgress(models.Model):
 
     def __str__(self):
         return f"{self.pet.name} - {self.title} ({self.progress}%)"
-    
-    def __str__(self):
-        return f"{self.name}"

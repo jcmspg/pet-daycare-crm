@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from datetime import datetime, timedelta
+from .managers import ServiceBookingManager, ServiceSlotManager
 
 class CheckIn(models.Model):
     pet = models.OneToOneField('pets.Pet', on_delete=models.CASCADE)  # ✅ String reference
@@ -76,6 +77,8 @@ class ServiceSlot(models.Model):
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    objects = ServiceSlotManager()
+    
     class Meta:
         ordering = ['date', 'start_time']
         unique_together = ('business', 'service', 'date', 'start_time')
@@ -108,6 +111,8 @@ class ServiceBooking(models.Model):
     confirmed_at = models.DateTimeField(null=True, blank=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
     
+    objects = ServiceBookingManager()
+    
     class Meta:
         ordering = ['-requested_at']
         unique_together = ('slot', 'pet')  # Each pet can only book a slot once
@@ -116,7 +121,7 @@ class ServiceBooking(models.Model):
         return f"{self.pet.name} - {self.slot.service.type.title()} on {self.slot.date} ({self.status})"
     
     def confirm(self):
-        """Staff confirms the booking"""
+        """Staff confirms the booking - DEPRECATED: Use BookingService.confirm_booking instead"""
         if self.status == 'pending':
             self.status = 'confirmed'
             self.confirmed_at = timezone.now()
@@ -125,7 +130,7 @@ class ServiceBooking(models.Model):
             self.save()
     
     def cancel(self):
-        """Cancel the booking (whether pending or confirmed)"""
+        """Cancel the booking - DEPRECATED: Use BookingService.cancel_booking instead"""
         if self.status in ['pending', 'confirmed']:
             if self.status == 'confirmed':
                 self.slot.booked_count -= 1

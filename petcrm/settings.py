@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'rest_framework',  # Django REST Framework
     'home', # Home/Landing page
     'pets', # Pets app
     'staff', # Staffing app
@@ -156,3 +157,79 @@ ACCOUNT_RATE_LIMITS = {
 
 # Email settings - use console backend for development (prints to terminal)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# ============================================================================
+# REST FRAMEWORK CONFIGURATION
+# ============================================================================
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
+}
+
+# ============================================================================
+# CELERY CONFIGURATION (Background Tasks)
+# ============================================================================
+# Uncomment when Redis is installed and running
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'
+# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_TIMEZONE = TIME_ZONE
+# CELERY_BEAT_SCHEDULE = {
+#     # Add periodic tasks here
+#     # 'check-vaccine-reminders': {
+#     #     'task': 'pets.tasks.check_vaccine_reminders',
+#     #     'schedule': crontab(hour=8, minute=0),  # Daily at 8 AM
+#     # },
+# }
+
+# ============================================================================
+# CACHING CONFIGURATION
+# ============================================================================
+# Uncomment when Redis is installed and running
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379/1',
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#         },
+#         'KEY_PREFIX': 'pawcentral',
+#         'TIMEOUT': 300,  # 5 minutes default timeout
+#     }
+# }
+# 
+# # Use Redis for session storage (optional but recommended)
+# SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+# SESSION_CACHE_ALIAS = 'default'
+
+# ============================================================================
+# DATABASE CONFIGURATION (PostgreSQL)
+# ============================================================================
+# Uncomment and configure when ready to migrate from SQLite to PostgreSQL
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'pawcentral',
+#         'USER': 'pawcentral_user',
+#         'PASSWORD': 'your_password_here',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#         'CONN_MAX_AGE': 600,  # Persistent connections
+#     }
+# }

@@ -3,10 +3,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
+from django.core.exceptions import ValidationError
 from datetime import datetime, timedelta
 import json
 from pets.models import Business, Pet
 from reservations.models import CheckIn, ServiceBooking
+from reservations.services.booking_service import BookingService
 from tutor.models import Woof, WoofLog, GlobalWoof
 from django.shortcuts import get_object_or_404
 from pets.models import TrainingProgress
@@ -25,7 +27,7 @@ def dashboard(request):
         messages.error(request, 'You are not authorized to access the staff dashboard.')
         return redirect('home:index')
     
-    pets = Pet.objects.filter(business=business)
+    pets = Pet.objects.for_business(business)
     pet_checkins = {pet.id: CheckIn.objects.filter(pet=pet).first() for pet in pets}
     # Recent public community woofs for staff feed preview (optional)
     recent_woofs = Woof.objects.filter(parent_woof__isnull=True, visibility='public').order_by('-created_at')[:10]
@@ -108,33 +110,38 @@ def dashboard(request):
             booking_id = request.POST.get('booking_id')
             try:
                 booking = ServiceBooking.objects.get(id=booking_id)
-                booking.confirm()
+                # Use service layer for business logic
+                BookingService.confirm_booking(booking, request.user)
                 messages.success(request, f'✅ Confirmed booking for {booking.pet.name} - {booking.slot.service.type} on {booking.slot.date}')
             except ServiceBooking.DoesNotExist:
                 messages.error(request, 'Booking not found.')
+            except ValidationError as e:
+                messages.error(request, str(e))
         elif action == 'reject_booking':
             booking_id = request.POST.get('booking_id')
             try:
                 booking = ServiceBooking.objects.get(id=booking_id)
-                booking.cancel()
+                # Use service layer for business logic
+                BookingService.cancel_booking(booking)
                 messages.success(request, f'❌ Rejected booking for {booking.pet.name} - {booking.slot.service.type}')
             except ServiceBooking.DoesNotExist:
                 messages.error(request, 'Booking not found.')
+            except ValidationError as e:
+                messages.error(request, str(e))
         
         return redirect('staff:dashboard')
     
-    # Get pending service booking requests
-    pending_bookings = ServiceBooking.objects.filter(status='pending').select_related('pet', 'tutor', 'slot__service').order_by('-requested_at')
+    # Get pending service booking requests (using custom manager)
+    pending_bookings = ServiceBooking.objects.for_business(business).pending().with_related().order_by('-requested_at')
     
     # Generate booking data for mini calendars (next 15 days)
     pet_bookings_json = {}
     today = timezone.now().date()
     
     for pet in pets:
-        pet_bookings = ServiceBooking.objects.filter(
-            pet=pet,
+        pet_bookings = ServiceBooking.objects.for_pet(pet).filter(
             status__in=['pending', 'confirmed']
-        ).select_related('slot').order_by('slot__date')
+        ).with_related().order_by('slot__date')
         
         pet_bookings_by_date = {}
         for booking in pet_bookings:
@@ -184,7 +191,7 @@ def feed(request):
         messages.error(request, 'You are not authorized to access the staff feed.')
         return redirect('home:index')
     
-    pets = Pet.objects.filter(business=business).order_by('name')
+    pets = Pet.objects.for_business(business).order_by('name')
     pet_checkins = {pet.id: CheckIn.objects.filter(pet=pet).first() for pet in pets}
 
     # Unified feed: pet woofs (all, top-level) + global woofs

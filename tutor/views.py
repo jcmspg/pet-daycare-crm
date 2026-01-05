@@ -203,13 +203,8 @@ def tutor_dashboard(request):
     today = datetime.now().date()
     next_30_days = [today + timedelta(days=i) for i in range(30)]
     
-    # Get all available service slots for this business only
-    available_slots = ServiceSlot.objects.filter(
-        business=business,
-        date__gte=today,
-        date__lte=today + timedelta(days=29),
-        is_available=True
-    ).select_related('service').order_by('date', 'start_time')
+    # Get all available service slots for this business only (using custom manager)
+    available_slots = ServiceSlot.objects.for_business(business).available().upcoming(days_ahead=29).with_related().order_by('date', 'start_time')
     
     # Group slots by date
     slots_by_date = {}
@@ -218,11 +213,8 @@ def tutor_dashboard(request):
             slots_by_date[slot.date] = []
         slots_by_date[slot.date].append(slot)
     
-    # Get tutor's existing bookings
-    tutor_bookings = ServiceBooking.objects.filter(
-        tutor=tutor,
-        slot__date__gte=today
-    ).select_related('slot', 'pet')
+    # Get tutor's existing bookings (using custom manager)
+    tutor_bookings = ServiceBooking.objects.for_tutor(tutor).upcoming(days_ahead=365).with_related()
     
     bookings_by_slot = {b.slot_id: b for b in tutor_bookings}
     

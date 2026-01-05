@@ -24,6 +24,7 @@ urlpatterns = [
     path('', include('home.urls')),
     path('accounts/', include('allauth.urls')),
     path('admin/', admin.site.urls),
+    path('api/reservations/', include('reservations.api.urls')),  # REST API
     path('staff/', include('staff.urls')),
     path('tutor/', include('tutor.urls')),
 ]
